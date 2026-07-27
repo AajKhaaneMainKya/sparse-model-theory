@@ -1,2 +1,4 @@
 PyYAML
 sentence-transformers
+fastapi
+uvicorn
