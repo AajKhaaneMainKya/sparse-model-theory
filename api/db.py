@@ -1,0 +1,288 @@
+"""SQLite persistence for second-brain threads and sessions.
+
+Uses only the stdlib ``sqlite3`` module (no ORM, no external dependency). A new
+connection is opened per operation: sqlite connections are cheap and FastAPI runs
+sync endpoints across a threadpool, so per-operation connections sidestep
+sqlite's single-thread affinity cleanly.
+
+The active database file is ``data/sparse_model_theory.db`` by default and can be
+redirected with the ``SMT_DB_PATH`` environment variable (used by tests to point
+at a throwaway file). The schema is created lazily the first time a given path is
+touched in this process, so callers never have to remember to run init_db().
+"""
+from __future__ import annotations
+
+from contextlib import contextmanager
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import sqlite3
+from typing import Iterator
+import uuid
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DB_PATH = ROOT / "data" / "sparse_model_theory.db"
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS threads (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    created_at  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id               TEXT PRIMARY KEY,
+    thread_id        TEXT NOT NULL REFERENCES threads(id),
+    created_at       TEXT NOT NULL,
+    mode             TEXT NOT NULL,
+    input_text       TEXT NOT NULL,
+    daily_capture    TEXT,
+    model_provider   TEXT NOT NULL,
+    model_name       TEXT NOT NULL,
+    thinking_mode    TEXT,
+    latency_ms       REAL NOT NULL,
+    raw_output_json  TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_thread_created
+    ON sessions(thread_id, created_at);
+"""
+
+_initialized_paths: set[str] = set()
+
+# Thread used when a session is captured without an explicit thread_id.
+UNCATEGORIZED_THREAD_NAME = "Uncategorized"
+
+
+def _db_path() -> Path:
+    override = os.environ.get("SMT_DB_PATH")
+    return Path(override) if override else DEFAULT_DB_PATH
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+@contextmanager
+def _connect() -> Iterator[sqlite3.Connection]:
+    path = _db_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    key = str(path)
+    if key not in _initialized_paths:
+        conn.executescript(SCHEMA)
+        conn.commit()
+        _initialized_paths.add(key)
+    try:
+        with conn:  # commits on success, rolls back on exception
+            yield conn
+    finally:
+        conn.close()
+
+
+def init_db() -> None:
+    """Ensure the schema exists for the active database path."""
+    with _connect():
+        pass
+
+
+def create_thread(name: str) -> dict[str, str]:
+    thread_id = str(uuid.uuid4())
+    now = _now()
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO threads (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+            (thread_id, name, now, now),
+        )
+    return {"id": thread_id, "name": name, "created_at": now, "updated_at": now}
+
+
+def get_or_create_uncategorized_thread() -> dict[str, str]:
+    """Return the shared "Uncategorized" thread, creating it once if absent.
+
+    Reuses the earliest-created thread with that name so repeated thread-less
+    captures all land in the same bucket rather than spawning duplicates.
+    """
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT id, name, created_at, updated_at FROM threads "
+            "WHERE name = ? ORDER BY created_at ASC, id ASC LIMIT 1",
+            (UNCATEGORIZED_THREAD_NAME,),
+        ).fetchone()
+        if row is not None:
+            return {
+                "id": row["id"],
+                "name": row["name"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
+
+        thread_id = str(uuid.uuid4())
+        now = _now()
+        conn.execute(
+            "INSERT INTO threads (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+            (thread_id, UNCATEGORIZED_THREAD_NAME, now, now),
+        )
+    return {
+        "id": thread_id,
+        "name": UNCATEGORIZED_THREAD_NAME,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+
+def thread_exists(thread_id: str) -> bool:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM threads WHERE id = ?", (thread_id,)
+        ).fetchone()
+    return row is not None
+
+
+def _thread_row_to_dict(row: sqlite3.Row) -> dict[str, object]:
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "session_count": row["session_count"],
+    }
+
+
+def get_thread(thread_id: str) -> dict[str, object] | None:
+    with _connect() as conn:
+        row = conn.execute(
+            """
+            SELECT t.id, t.name, t.created_at, t.updated_at,
+                   (SELECT COUNT(*) FROM sessions s WHERE s.thread_id = t.id) AS session_count
+            FROM threads t
+            WHERE t.id = ?
+            """,
+            (thread_id,),
+        ).fetchone()
+    return _thread_row_to_dict(row) if row else None
+
+
+def list_threads() -> list[dict[str, object]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT t.id, t.name, t.created_at, t.updated_at,
+                   (SELECT COUNT(*) FROM sessions s WHERE s.thread_id = t.id) AS session_count
+            FROM threads t
+            ORDER BY t.updated_at DESC, t.created_at DESC
+            """
+        ).fetchall()
+    return [_thread_row_to_dict(row) for row in rows]
+
+
+def add_session(
+    *,
+    thread_id: str,
+    mode: str,
+    input_text: str,
+    daily_capture: str | None,
+    model_provider: str,
+    model_name: str,
+    thinking_mode: str | None,
+    latency_ms: float,
+    raw_output: object,
+) -> dict[str, str]:
+    """Insert a session record and bump its thread's updated_at, atomically."""
+    session_id = str(uuid.uuid4())
+    now = _now()
+    raw_output_json = json.dumps(raw_output, ensure_ascii=False)
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO sessions (
+                id, thread_id, created_at, mode, input_text, daily_capture,
+                model_provider, model_name, thinking_mode, latency_ms, raw_output_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session_id,
+                thread_id,
+                now,
+                mode,
+                input_text,
+                daily_capture,
+                model_provider,
+                model_name,
+                thinking_mode,
+                latency_ms,
+                raw_output_json,
+            ),
+        )
+        conn.execute(
+            "UPDATE threads SET updated_at = ? WHERE id = ?", (now, thread_id)
+        )
+    return {"id": session_id, "thread_id": thread_id, "created_at": now}
+
+
+def move_session(session_id: str, thread_id: str) -> dict[str, str] | None:
+    """Re-thread an existing session. Returns None if the session doesn't exist.
+
+    The caller is responsible for confirming the target thread exists (the FK
+    would also reject a bad target). The destination thread's updated_at is
+    bumped so it surfaces as recently touched.
+    """
+    now = _now()
+    with _connect() as conn:
+        cursor = conn.execute(
+            "UPDATE sessions SET thread_id = ? WHERE id = ?", (thread_id, session_id)
+        )
+        if cursor.rowcount == 0:
+            return None
+        conn.execute(
+            "UPDATE threads SET updated_at = ? WHERE id = ?", (now, thread_id)
+        )
+    return {"id": session_id, "thread_id": thread_id}
+
+
+def list_sessions(thread_id: str, truncate: int = 100) -> list[dict[str, object]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, created_at, mode, input_text, latency_ms
+            FROM sessions
+            WHERE thread_id = ?
+            ORDER BY created_at DESC, id DESC
+            """,
+            (thread_id,),
+        ).fetchall()
+
+    sessions: list[dict[str, object]] = []
+    for row in rows:
+        text = row["input_text"]
+        if truncate and len(text) > truncate:
+            text = text[:truncate].rstrip() + "..."
+        sessions.append(
+            {
+                "id": row["id"],
+                "created_at": row["created_at"],
+                "mode": row["mode"],
+                "input_text": text,
+                "latency_ms": row["latency_ms"],
+            }
+        )
+    return sessions
+
+
+def get_session(session_id: str) -> dict[str, object] | None:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+    if row is None:
+        return None
+
+    record = dict(row)
+    # Return the stored blob parsed back into a real object, not a JSON string.
+    record["raw_output"] = json.loads(record.pop("raw_output_json"))
+    return record

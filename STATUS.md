@@ -11,6 +11,28 @@
 - `tests/test_note_retrieval.py`: created. It covers YAML edge cases, including hash/colon/nested-list parsing and empty frontmatter, plus semantic retrieval cases for vocabulary-mismatch matching, unrelated-query no-match behavior, and weak-match distinguishability.
 - `tests/test_gate.py`: updated for the `MatchResult` return type as a narrow consequence of the `retrieval.py` API change.
 
+## SQLite Session Persistence
+
+- `api/db.py`: stdlib `sqlite3` persistence (no ORM). Tables `threads` and `sessions`
+  (FK `sessions.thread_id -> threads(id)`), index `idx_sessions_thread_created` on
+  `(thread_id, created_at)`. DB at `data/sparse_model_theory.db` (gitignored via
+  `data/`), overridable with `SMT_DB_PATH`. Schema is created lazily per path.
+- `sessions.raw_output_json` stores the FULL analysis payload as JSON; `input_text`
+  stores the FULL input (only `list_sessions()` truncates for display, never the
+  stored row). Nothing about a session is persisted lossily.
+- `api/server.py` endpoints: `POST /threads`, `GET /threads`,
+  `GET /threads/{id}/sessions`, `GET /sessions/{id}`, and session writes on
+  `POST /second-brain`.
+
+### Thread-handling decision (capture now, organize later)
+
+- `thread_id` is **OPTIONAL** on `POST /second-brain`. Omitted -> auto-create or
+  reuse a thread named "Uncategorized". Provided but nonexistent -> `404` (an
+  explicit id signals explicit intent; only the omitted case auto-creates).
+- `PATCH /sessions/{id}` `{ "thread_id" }` re-threads an existing session, so a
+  session captured into "Uncategorized" can be organized afterward. Moving to a
+  nonexistent thread -> `404`.
+
 ## Not Verified Yet
 
 - The full test suite has not been run successfully.
@@ -27,3 +49,9 @@
 - Recalibrate the `0.30` threshold once real scores are seen and once real, non-synthetic notes exist.
 - Add an exact-boundary test for `score == 0.30` only after extracting a deterministic `tier_for_score()` helper. Do not try to force MiniLM to produce an exact float.
 - Replace text-keyed `lru_cache` embedding reuse with a proper note-id + content-hash based index if note count grows.
+- **Thread auto-suggestion via existing embedding infrastructure — not yet built,
+  schema supports it.** A future pass can run the existing MiniLM pipeline
+  (`engine/retrieval.py`) against `sessions.input_text` to suggest likely-matching
+  threads for an "Uncategorized" session. No schema change is required: `input_text`
+  is stored full and un-truncated, which is what good embeddings need. This is a
+  documented future phase only; do not build the suggestion logic yet.
