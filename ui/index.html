@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sparse Model Theory | Second Brain Console</title>
+  <title>Sparse Model Theory | Second Brain</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
   <div class="shell">
     <header class="topbar">
-      <div>
+      <div class="brand">
         <p class="eyebrow">Sparse Model Theory</p>
-        <h1>Second Brain Console</h1>
+        <h1>Second Brain</h1>
       </div>
       <dl class="status-grid" aria-label="Zone status">
         <div>
@@ -29,123 +29,173 @@
       </dl>
     </header>
 
-    <main class="console-grid">
-      <aside class="panel daily-panel" aria-labelledby="daily-title">
-        <div class="panel-heading">
-          <p class="section-kicker">Capture</p>
-          <h2 id="daily-title">Daily Capture</h2>
-        </div>
-        <label for="daily-capture">Today&rsquo;s raw notes</label>
-        <textarea
-          id="daily-capture"
-          spellcheck="true"
-          placeholder="Drop the day&rsquo;s observations, fragments, calls, and decisions here."
-        ></textarea>
-        <button id="save-capture" class="secondary-action" type="button">
-          Save capture
-        </button>
-        <p id="capture-status" class="inline-status" aria-live="polite">No capture saved in this session.</p>
-      </aside>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab is-active" type="button" role="tab" data-view="workspace">Workspace</button>
+      <button class="tab" type="button" role="tab" data-view="present">Present &middot; Next</button>
+      <button class="tab" type="button" role="tab" data-view="history">History</button>
+    </nav>
 
-      <section class="panel analysis-panel" aria-labelledby="analysis-title">
-        <div class="panel-heading">
-          <p class="section-kicker">Packet</p>
-          <h2 id="analysis-title">Object of Analysis</h2>
+    <!-- ============================ WORKSPACE ============================ -->
+    <section id="view-workspace" class="view is-active" role="tabpanel" aria-label="Workspace">
+      <main class="console-grid">
+        <aside class="panel daily-panel" aria-labelledby="daily-title">
+          <div class="panel-heading">
+            <p class="section-kicker">Capture</p>
+            <h2 id="daily-title">Daily Capture</h2>
+          </div>
+          <label for="daily-capture">Today&rsquo;s raw notes</label>
+          <textarea
+            id="daily-capture"
+            spellcheck="true"
+            placeholder="Drop the day&rsquo;s observations, fragments, calls, and decisions here."
+          ></textarea>
+          <button id="save-capture" class="secondary-action" type="button">Save capture</button>
+          <p id="capture-status" class="inline-status" aria-live="polite">No capture saved in this session.</p>
+        </aside>
+
+        <section class="panel analysis-panel" aria-labelledby="analysis-title">
+          <div class="panel-heading">
+            <p class="section-kicker">Packet</p>
+            <h2 id="analysis-title">Object of Analysis</h2>
+          </div>
+          <div class="thread-control">
+            <label for="thread-select">Thread (optional &mdash; defaults to Uncategorized)</label>
+            <div class="thread-picker">
+              <select id="thread-select" aria-label="Active thread">
+                <option value="">Uncategorized (default)</option>
+              </select>
+              <button id="refresh-threads" class="secondary-action compact" type="button" title="Refresh threads">Refresh</button>
+            </div>
+            <div class="thread-create">
+              <input id="new-thread-name" type="text" placeholder="New thread name (e.g. LP conversation)" />
+              <button id="create-thread" class="secondary-action compact" type="button">Create</button>
+            </div>
+            <p id="thread-status" class="inline-status" aria-live="polite">Leave as Uncategorized, or pick / create a thread. You can re-thread sessions later.</p>
+          </div>
+          <label for="analysis-input">Proposal, product, market, or decision</label>
+          <textarea
+            id="analysis-input"
+            spellcheck="true"
+            placeholder="Describe the thing to analyze with enough concrete detail for the Zone to hold scope."
+          ></textarea>
+          <fieldset class="mode-control" aria-describedby="mode-description">
+            <legend>Thinking mode</legend>
+            <div class="segmented-control">
+              <label>
+                <input type="radio" name="thinking-mode" value="economy" />
+                <span>Economy</span>
+              </label>
+              <label>
+                <input type="radio" name="thinking-mode" value="balanced" checked />
+                <span>Balanced</span>
+              </label>
+              <label>
+                <input type="radio" name="thinking-mode" value="deep" />
+                <span>Deep</span>
+              </label>
+            </div>
+            <p id="mode-description" class="mode-description">Low cost by default, upgrades harder skills.</p>
+          </fieldset>
+          <label class="check-card">
+            <input id="agentic-mode" type="checkbox" />
+            <span>
+              <strong>Agentic multi-pass</strong>
+              <small>Plans passes, checks gaps, runs one follow-up if needed, then synthesizes.</small>
+            </span>
+          </label>
+          <label class="check-card">
+            <input id="include-thread-context" type="checkbox" />
+            <span>
+              <strong>Include thread context</strong>
+              <small>Opt-in. Injects a compressed summary of this thread&rsquo;s last 2 sessions once into the first pass. Tip: typing &ldquo;+ThreadName&rdquo; also turns this on for that run.</small>
+            </span>
+          </label>
+          <div class="action-row">
+            <button id="run-analysis" class="primary-action" type="button">Run analysis</button>
+            <p id="analysis-status" class="inline-status" aria-live="polite">Standing by.</p>
+          </div>
+        </section>
+
+        <aside class="panel skills-panel" aria-labelledby="skills-title">
+          <div class="panel-heading">
+            <p class="section-kicker">Controls</p>
+            <h2 id="skills-title">Skill Stack</h2>
+          </div>
+          <div id="skill-controls" class="skill-list"></div>
+        </aside>
+      </main>
+
+      <section class="results-band" aria-labelledby="results-title">
+        <div class="results-header">
+          <div>
+            <p class="section-kicker">Briefs</p>
+            <h2 id="results-title">Analysis Packet</h2>
+          </div>
+          <div class="packet-meta">
+            <span id="result-count">0 briefs</span>
+            <span id="skipped-count">0 skipped</span>
+          </div>
         </div>
-        <div class="thread-control">
-          <label for="thread-select">Thread (optional &mdash; defaults to Uncategorized)</label>
-          <div class="thread-picker">
-            <select id="thread-select" aria-label="Active thread">
-              <option value="">Uncategorized (default)</option>
-            </select>
-            <button id="refresh-threads" class="secondary-action compact" type="button" title="Refresh threads">Refresh</button>
-          </div>
-          <div class="thread-create">
-            <input id="new-thread-name" type="text" placeholder="New thread name (e.g. LP conversation)" />
-            <button id="create-thread" class="secondary-action compact" type="button">Create</button>
-          </div>
-          <p id="thread-status" class="inline-status" aria-live="polite">Leave as Uncategorized, or pick / create a thread. You can re-thread sessions later.</p>
+
+        <div id="error-box" class="error-box hidden" role="alert"></div>
+        <div id="results" class="results-list">
+          <p class="empty-state">Run an analysis to generate labeled intelligence briefs.</p>
         </div>
-        <label for="analysis-input">Proposal, product, market, or decision</label>
-        <textarea
-          id="analysis-input"
-          spellcheck="true"
-          placeholder="Describe the thing to analyze with enough concrete detail for the Zone to hold scope."
-        ></textarea>
-        <fieldset class="mode-control" aria-describedby="mode-description">
-          <legend>Thinking mode</legend>
-          <div class="segmented-control">
-            <label>
-              <input type="radio" name="thinking-mode" value="economy" />
-              <span>Economy</span>
-            </label>
-            <label>
-              <input type="radio" name="thinking-mode" value="balanced" checked />
-              <span>Balanced</span>
-            </label>
-            <label>
-              <input type="radio" name="thinking-mode" value="deep" />
-              <span>Deep</span>
-            </label>
-          </div>
-          <p id="mode-description" class="mode-description">
-            Low cost by default, upgrades harder skills.
-          </p>
-        </fieldset>
-        <label class="agentic-toggle">
-          <input id="agentic-mode" type="checkbox" />
-          <span>
-            <strong>Agentic multi-pass</strong>
-            <small>Plans passes, checks gaps, runs one follow-up if needed, then synthesizes.</small>
-          </span>
-        </label>
-        <div class="action-row">
-          <button id="run-analysis" class="primary-action" type="button">
-            Run analysis
-          </button>
-          <p id="analysis-status" class="inline-status" aria-live="polite">Standing by.</p>
+
+        <div id="skipped-panel" class="skipped-panel hidden">
+          <h3>Skipped Skills</h3>
+          <ul id="skipped-list"></ul>
         </div>
       </section>
-
-      <aside class="panel skills-panel" aria-labelledby="skills-title">
-        <div class="panel-heading">
-          <p class="section-kicker">Controls</p>
-          <h2 id="skills-title">Skill Stack</h2>
-        </div>
-        <div id="skill-controls" class="skill-list"></div>
-      </aside>
-    </main>
-
-    <section class="results-band" aria-labelledby="results-title">
-      <div class="results-header">
-        <div>
-          <p class="section-kicker">Briefs</p>
-          <h2 id="results-title">Analysis Packet</h2>
-        </div>
-        <div class="packet-meta">
-          <span id="result-count">0 briefs</span>
-          <span id="skipped-count">0 skipped</span>
-        </div>
-      </div>
-
-      <div id="error-box" class="error-box hidden" role="alert"></div>
-      <div id="results" class="results-list">
-        <p class="empty-state">Run an analysis to generate labeled intelligence briefs.</p>
-      </div>
-
-      <div id="skipped-panel" class="skipped-panel hidden">
-        <h3>Skipped Skills</h3>
-        <ul id="skipped-list"></ul>
-      </div>
     </section>
 
-    <section class="history-band" aria-labelledby="history-title">
-      <div class="results-header">
-        <div>
-          <p class="section-kicker">History</p>
-          <h2 id="history-title">Threads &amp; Sessions</h2>
-        </div>
+    <!-- ============================ PRESENT / NEXT ============================ -->
+    <section id="view-present" class="view" role="tabpanel" aria-label="Present and Next" hidden>
+      <div class="view-heading">
+        <p class="section-kicker">Timeline</p>
+        <h2>Present &amp; Next</h2>
+        <p class="view-sub">Where your thinking is now, and the open questions it points to &mdash; drawn from your most recent session.</p>
       </div>
+
+      <p id="present-status" class="inline-status" aria-live="polite">Loading&hellip;</p>
+
+      <div class="timeline" id="timeline" hidden>
+        <button class="figure-block" id="figure-present" type="button">
+          <svg class="figure-svg" viewBox="0 0 64 82" aria-hidden="true">
+            <circle cx="32" cy="19" r="13" />
+            <path d="M11 78 C11 54 20 45 32 45 C44 45 53 54 53 78 Z" />
+          </svg>
+          <span class="figure-label">Now</span>
+        </button>
+        <div class="timeline-path" aria-hidden="true"></div>
+        <button class="figure-block" id="figure-next" type="button">
+          <svg class="figure-svg" viewBox="0 0 64 82" aria-hidden="true">
+            <circle cx="32" cy="19" r="13" />
+            <path d="M11 78 C11 54 20 45 32 45 C44 45 53 54 53 78 Z" />
+          </svg>
+          <span class="figure-label">Next</span>
+        </button>
+      </div>
+
+      <div class="timeline-cards" id="timeline-cards" hidden>
+        <article class="accent-card" id="present-card"></article>
+        <article class="accent-card" id="next-card"></article>
+      </div>
+
+      <div id="present-detail" class="results-list"></div>
+    </section>
+
+    <!-- ============================ HISTORY ============================ -->
+    <section id="view-history" class="view" role="tabpanel" aria-label="History" hidden>
+      <div class="view-heading">
+        <p class="section-kicker">Browse</p>
+        <h2>History</h2>
+        <p class="view-sub">Every thread and session, most recent first. Click a thread, then a session.</p>
+      </div>
+
+      <input id="history-search" class="search-input" type="search"
+             placeholder="Search threads by name or date&hellip;" aria-label="Search threads" />
+
       <div class="history-grid">
         <div class="history-col">
           <h3>Threads</h3>
@@ -160,6 +210,8 @@
           </ul>
         </div>
       </div>
+
+      <div id="history-detail" class="results-list"></div>
     </section>
   </div>
 
@@ -167,9 +219,7 @@
     <form method="dialog">
       <p class="section-kicker">Thinking mode</p>
       <h2 id="nudge-title">This may need deeper thinking</h2>
-      <p id="nudge-body">
-        This input looks strategic, ambiguous, or financially consequential.
-      </p>
+      <p id="nudge-body">This input looks strategic, ambiguous, or financially consequential.</p>
       <div class="modal-actions">
         <button id="nudge-upgrade" class="primary-action" type="button">Switch to Balanced</button>
         <button id="nudge-run-anyway" class="secondary-action compact" type="button">Run Economy Anyway</button>

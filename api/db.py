@@ -44,12 +44,20 @@ CREATE TABLE IF NOT EXISTS sessions (
     model_name       TEXT NOT NULL,
     thinking_mode    TEXT,
     latency_ms       REAL NOT NULL,
-    raw_output_json  TEXT NOT NULL
+    raw_output_json  TEXT NOT NULL,
+    summary          TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_thread_created
     ON sessions(thread_id, created_at);
 """
+
+# Columns added after the original schema shipped, applied idempotently to any
+# already-existing sessions table via non-destructive ALTER TABLE ADD COLUMN
+# (never drops data). Keep in sync with the CREATE TABLE above.
+_EXPECTED_SESSION_COLUMNS: dict[str, str] = {
+    "summary": "TEXT",
+}
 
 _initialized_paths: set[str] = set()
 
@@ -63,7 +71,9 @@ def _db_path() -> Path:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    # Microsecond precision so "most recent" ordering (list_sessions,
+    # recent_summaries) is deterministic for rows written in the same second.
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds")
 
 
 @contextmanager
@@ -76,6 +86,7 @@ def _connect() -> Iterator[sqlite3.Connection]:
     key = str(path)
     if key not in _initialized_paths:
         conn.executescript(SCHEMA)
+        _ensure_session_columns(conn)
         conn.commit()
         _initialized_paths.add(key)
     try:
@@ -83,6 +94,24 @@ def _connect() -> Iterator[sqlite3.Connection]:
             yield conn
     finally:
         conn.close()
+
+
+def _ensure_session_columns(conn: sqlite3.Connection) -> list[str]:
+    """Additively bring an existing sessions table up to the current column set.
+
+    Only ever runs ``ALTER TABLE ... ADD COLUMN`` for missing columns, which SQLite
+    performs in-place without touching existing rows (they get NULL). Never drops or
+    rewrites data. Returns the list of columns it added (empty if already current).
+    """
+    # PRAGMA table_info columns: (cid, name, type, ...). Index by position so this
+    # works regardless of the connection's row_factory.
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(sessions)")}
+    added: list[str] = []
+    for column, decl in _EXPECTED_SESSION_COLUMNS.items():
+        if column not in existing:
+            conn.execute(f"ALTER TABLE sessions ADD COLUMN {column} {decl}")
+            added.append(column)
+    return added
 
 
 def init_db() -> None:
@@ -192,6 +221,7 @@ def add_session(
     thinking_mode: str | None,
     latency_ms: float,
     raw_output: object,
+    summary: str | None = None,
 ) -> dict[str, str]:
     """Insert a session record and bump its thread's updated_at, atomically."""
     session_id = str(uuid.uuid4())
@@ -202,8 +232,9 @@ def add_session(
             """
             INSERT INTO sessions (
                 id, thread_id, created_at, mode, input_text, daily_capture,
-                model_provider, model_name, thinking_mode, latency_ms, raw_output_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                model_provider, model_name, thinking_mode, latency_ms, raw_output_json,
+                summary
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 session_id,
@@ -217,6 +248,7 @@ def add_session(
                 thinking_mode,
                 latency_ms,
                 raw_output_json,
+                summary,
             ),
         )
         conn.execute(
@@ -286,3 +318,40 @@ def get_session(session_id: str) -> dict[str, object] | None:
     # Return the stored blob parsed back into a real object, not a JSON string.
     record["raw_output"] = json.loads(record.pop("raw_output_json"))
     return record
+
+
+def recent_summaries(thread_id: str, limit: int = 2) -> list[str]:
+    """Most-recent stored session summaries for a thread (newest first).
+
+    Returns only non-empty summaries and never the raw_output_json — this is the
+    cheap, compressed source used for opt-in thread-context injection.
+    """
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT summary FROM sessions
+            WHERE thread_id = ? AND summary IS NOT NULL AND TRIM(summary) != ''
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (thread_id, limit),
+        ).fetchall()
+    return [row["summary"] for row in rows]
+
+
+def find_thread_by_name(name: str) -> dict[str, str] | None:
+    """Case-insensitive exact thread lookup (trimmed). Returns earliest match."""
+    target = name.strip().lower()
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT id, name, created_at, updated_at FROM threads "
+            "WHERE LOWER(TRIM(name)) = ? ORDER BY created_at ASC, id ASC LIMIT 1",
+            (target,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def all_thread_names() -> list[str]:
+    with _connect() as conn:
+        rows = conn.execute("SELECT name FROM threads ORDER BY name ASC").fetchall()
+    return [row["name"] for row in rows]

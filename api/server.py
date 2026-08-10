@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+import difflib
 from email.parser import BytesParser
 from email.policy import default
 import logging
@@ -26,8 +27,11 @@ from .zone import (
     DEFAULT_OLLAMA_MODEL,
     agentic_second_brain_analysis,
     answer_with_context,
+    build_thread_context_block,
     get_latest_daily_capture,
+    parse_thread_shorthand,
     second_brain_analysis,
+    summarize_session,
 )
 
 
@@ -75,6 +79,9 @@ class SecondBrainRequest(BaseModel):
     skip_skills: list[str] = []
     mode: Literal["economy", "balanced", "deep"] = "balanced"
     agentic: bool = False
+    # Opt-in, default False. When true, the most recent prior session summaries in
+    # this thread are compressed and injected once into the initial pass.
+    include_thread_context: bool = False
 
 
 class ThreadCreateRequest(BaseModel):
@@ -286,6 +293,53 @@ def patch_session_thread(session_id: str, request: SessionMoveRequest) -> dict[s
     return moved
 
 
+@app.get("/present-future")
+def present_future() -> dict[str, object]:
+    """Present/Next timeline built entirely from real stored session data.
+
+    - present: the most recent session (the current state of thinking), summarized.
+    - next: the forward-looking synthesis of that same session ("next questions"),
+      when it exists (agentic runs produce one). Null otherwise — never fabricated.
+    The two figures are linked because next is drawn from the present session.
+    """
+    threads = db.list_threads()  # most-recently-updated first
+    for thread in threads:
+        sessions = db.list_sessions(thread["id"])
+        if not sessions:
+            continue
+        latest = db.get_session(sessions[0]["id"])
+        if latest is None:
+            continue
+
+        input_text = str(latest.get("input_text") or "")
+        excerpt = input_text[:180] + ("…" if len(input_text) > 180 else "")
+        present = {
+            "session_id": latest["id"],
+            "thread_id": latest["thread_id"],
+            "thread_name": thread["name"],
+            "created_at": latest["created_at"],
+            "input_excerpt": excerpt,
+            "summary": latest.get("summary"),
+        }
+
+        next_thought = None
+        raw = latest.get("raw_output")
+        synthesis = raw.get("synthesis") if isinstance(raw, dict) else None
+        if isinstance(synthesis, dict):
+            output = synthesis.get("output")
+            if isinstance(output, str) and output.strip():
+                next_thought = {
+                    "session_id": latest["id"],
+                    "thread_id": latest["thread_id"],
+                    "thread_name": thread["name"],
+                    "synthesis": output,
+                }
+
+        return {"present": present, "next": next_thought, "linked": next_thought is not None}
+
+    return {"present": None, "next": None, "linked": False}
+
+
 def _resolve_thread_id(requested_thread_id: str | None) -> str:
     """Optional thread_id: omitted -> Uncategorized; provided-but-missing -> 404."""
     if requested_thread_id is None:
@@ -301,47 +355,127 @@ def _resolve_thread_id(requested_thread_id: str | None) -> str:
     return requested_thread_id
 
 
+def _close_thread_names(name: str, limit: int = 3) -> list[str]:
+    """Case-insensitive fuzzy suggestions for an unresolved '+ThreadName'."""
+    names = db.all_thread_names()
+    lower_to_original: dict[str, str] = {}
+    for original in names:
+        lower_to_original.setdefault(original.lower(), original)
+    close = difflib.get_close_matches(name.lower(), list(lower_to_original), n=limit, cutoff=0.4)
+    return [lower_to_original[match] for match in close]
+
+
+@dataclass(frozen=True)
+class _ResolvedRun:
+    input_text: str
+    thread_id: str
+    include_thread_context: bool
+    shorthand_thread: str | None
+
+
+def _resolve_run(request: SecondBrainRequest) -> _ResolvedRun:
+    """Apply the '+ThreadName' shorthand, else fall back to the request fields.
+
+    Shorthand, when it resolves, overrides the selected thread AND implicitly turns
+    on thread-context injection (an explicit continuity signal). An unresolved
+    shorthand raises a clarifying 400 and never guesses or auto-creates a thread.
+    """
+    cleaned_text, shorthand_name = parse_thread_shorthand(request.input)
+
+    if shorthand_name is None:
+        return _ResolvedRun(
+            input_text=request.input,
+            thread_id=_resolve_thread_id(request.thread_id),
+            include_thread_context=request.include_thread_context,
+            shorthand_thread=None,
+        )
+
+    if not cleaned_text:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Nothing to analyze after removing the '+{shorthand_name}' thread shorthand — "
+                "include the text you want analyzed alongside it."
+            ),
+        )
+
+    match = db.find_thread_by_name(shorthand_name)
+    if match is None:
+        suggestions = _close_thread_names(shorthand_name)
+        hint = ", ".join(suggestions) if suggestions else "none — create it first via POST /threads"
+        raise HTTPException(
+            status_code=400,
+            detail=f"No thread found matching '{shorthand_name}' — did you mean one of: [{hint}]?",
+        )
+
+    return _ResolvedRun(
+        input_text=cleaned_text,
+        thread_id=match["id"],
+        include_thread_context=True,  # explicit intent via shorthand
+        shorthand_thread=match["name"],
+    )
+
+
 @app.post("/second-brain")
 def second_brain(request: SecondBrainRequest) -> dict[str, object]:
-    thread_id = _resolve_thread_id(request.thread_id)
+    resolved = _resolve_run(request)
+    input_text = resolved.input_text
+    thread_id = resolved.thread_id
+
+    # Opt-in, cost-controlled thread context. Off by default => nothing fetched,
+    # nothing injected, same token cost as before this feature existed.
+    thread_context: str | None = None
+    if resolved.include_thread_context:
+        summaries = db.recent_summaries(thread_id, limit=2)
+        thread_context = build_thread_context_block(summaries) or None
 
     started_at = time.perf_counter()
     # Snapshot the daily capture up front so the exact text used is what we persist.
     daily_capture = get_latest_daily_capture()
     if request.agentic:
         payload = agentic_second_brain_analysis(
-            request.input,
+            input_text,
             daily_capture=daily_capture,
             skip_skills=request.skip_skills,
             mode=request.mode,
+            thread_context=thread_context,
         )
     else:
         payload = second_brain_analysis(
-            request.input,
+            input_text,
             daily_capture=daily_capture,
             skip_skills=request.skip_skills,
             mode=request.mode,
+            thread_context=thread_context,
         )
     payload["latency_ms"] = round((time.perf_counter() - started_at) * 1000, 1)
+
+    # One cheap summary call at write-time, feeding the compressed thread memory.
+    summary = summarize_session(input_text, payload, mode=request.mode)
 
     provider, model_name = _session_model_summary()
     session = db.add_session(
         thread_id=thread_id,
         mode="agentic" if request.agentic else "fixed",
-        input_text=request.input,
+        input_text=input_text,
         daily_capture=daily_capture,
         model_provider=provider,
         model_name=model_name,
         thinking_mode=request.mode,
         latency_ms=payload["latency_ms"],
         raw_output=payload,
+        summary=summary,
     )
     payload["session_id"] = session["id"]
     payload["thread_id"] = thread_id
+    payload["thread_context_injected"] = thread_context is not None
+    if resolved.shorthand_thread is not None:
+        payload["shorthand_thread"] = resolved.shorthand_thread
     logger.info(
-        "POST /second-brain wrote session %s to thread %s in %.1f ms",
+        "POST /second-brain wrote session %s to thread %s (context_injected=%s) in %.1f ms",
         session["id"],
         thread_id,
+        thread_context is not None,
         payload["latency_ms"],
     )
     return payload
@@ -380,3 +514,13 @@ def query(request: QueryRequest) -> dict[str, object]:
         elapsed_ms = round((time.perf_counter() - started_at) * 1000, 1)
         logger.exception("POST /query failed after %.1f ms", elapsed_ms)
         raise
+
+
+if __name__ == "__main__":
+    # Railway (and most PaaS) inject the port to bind via $PORT at runtime; never
+    # hardcode it. The Procfile runs uvicorn directly with --port $PORT; this block
+    # makes `python -m api.server` honor the same env var as a fallback entrypoint.
+    import uvicorn
+
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -24,6 +24,26 @@
   `GET /threads/{id}/sessions`, `GET /sessions/{id}`, and session writes on
   `POST /second-brain`.
 
+### Compressed summaries + opt-in thread context injection
+
+- `sessions.summary TEXT` column added. Generated once at session write-time via a
+  single cheap economy-model call (`zone.summarize_session`, 2-4 sentences). Stored
+  alongside (not replacing) `raw_output_json`. `input_text` remains full/un-truncated.
+- Schema change is handled by `scripts/migrate_add_summary.py`: it is SMT_DB_PATH-aware
+  (migrates the local db AND the Railway volume db), backs up `<db>.bak-<UTC>` first,
+  then runs a non-destructive `ALTER TABLE ... ADD COLUMN` only if missing (idempotent,
+  never drops rows). The app also self-heals via `db._ensure_session_columns()` on first
+  connect (additive ADD COLUMN only), so a forgotten migration can't corrupt data.
+- `POST /second-brain` gains `include_thread_context: bool` (DEFAULT FALSE). When true,
+  the 2 most recent session summaries are compressed (per-summary and total token caps)
+  and injected ONCE — into scope_check (fixed) or the planning pass (agentic); downstream
+  passes reference it rather than re-receiving it. Off by default = nothing fetched, no
+  added tokens. Measured added cost (Ollama usage): 153 -> 312 prompt tokens (+159).
+- `+ThreadName` shorthand in the input: stripped from the analyzed text, resolved by
+  case-insensitive exact match (fuzzy only to *suggest* on miss), overrides the selected
+  thread, and implicitly sets include_thread_context=true. An unresolved name returns a
+  clarifying 400 ("did you mean …?") and does not run — never auto-creates/guesses.
+
 ### Thread-handling decision (capture now, organize later)
 
 - `thread_id` is **OPTIONAL** on `POST /second-brain`. Omitted -> auto-create or
@@ -32,6 +52,21 @@
 - `PATCH /sessions/{id}` `{ "thread_id" }` re-threads an existing session, so a
   session captured into "Uncategorized" can be organized afterward. Moving to a
   nonexistent thread -> `404`.
+
+## Deployment (Railway)
+
+- **Railway deployment — requires `OPENAI_API_KEY` env var set on Railway, requires
+  a persistent volume mounted for the SQLite db path, local Ollama path will report
+  unavailable (expected, no GPU/Ollama on Railway).**
+- `Procfile`: `web: uvicorn api.server:app --host 0.0.0.0 --port $PORT`. Railway
+  injects `$PORT` at runtime; the port is never hardcoded. `api/server.py` also has
+  a `__main__` block that reads `PORT` (fallback `8000`) for `python -m api.server`.
+- `SMT_DB_PATH` is read from the environment (`api/db.py:_db_path()`); point it at the
+  mounted volume, e.g. `SMT_DB_PATH=/data/sparse_model_theory.db`. It is NOT hardcoded
+  to a local path (the local default `data/sparse_model_theory.db` is only a fallback).
+- `OLLAMA_URL` is env-overridable; when unreachable (the Railway case) the Ollama
+  provider returns a clean "Ollama is not available in this environment" message
+  instead of hanging or leaking a raw socket error. Use `ZONE_PROVIDER=openai` there.
 
 ## Not Verified Yet
 

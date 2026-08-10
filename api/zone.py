@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[1]
 DAILY_DIR = ROOT / "notes" / "daily"
-OLLAMA_URL = "http://localhost:11434/v1/chat/completions"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/v1/chat/completions")
 DEFAULT_OLLAMA_MODEL = "qwen2.5:7b-instruct-q4_K_M"
 OPENAI_RESPONSES_PATH = "/responses"
 ThinkingMode = Literal["economy", "balanced", "deep"]
@@ -465,11 +465,18 @@ def _call_ollama_model(
         detail = exc.read().decode("utf-8", errors="replace")
         return f"Zone unavailable: Ollama returned HTTP {exc.code}: {detail}"
     except error.URLError as exc:
-        return f"Zone unavailable: could not connect to Ollama at {OLLAMA_URL}: {exc.reason}"
+        # Ollama service isn't reachable (not running, or no local model host —
+        # e.g. any hosted deployment without a GPU/Ollama). Degrade honestly rather
+        # than surfacing a raw socket error; this project never fakes a capability.
+        return (
+            "Zone unavailable: Ollama is not available in this environment "
+            f"(could not reach {OLLAMA_URL}: {exc.reason}). "
+            "Set ZONE_PROVIDER=openai with OPENAI_API_KEY to use the hosted model."
+        )
     except TimeoutError:
-        return "Zone unavailable: Ollama request timed out."
+        return "Zone unavailable: Ollama is not available in this environment (request timed out)."
     except OSError as exc:
-        return f"Zone unavailable: Ollama request failed: {exc}"
+        return f"Zone unavailable: Ollama is not available in this environment ({exc})."
 
     try:
         return str(data["choices"][0]["message"]["content"]).strip()
@@ -615,11 +622,126 @@ def answer_with_context(query: str, matches: list[Match]) -> str:
     return call_zone_model(SYSTEM_PROMPT, input_text)
 
 
+# --- Thread context injection + session summarization (opt-in, cost-controlled) ---
+
+SESSION_SUMMARY_PROMPT = (
+    "You are compressing a completed analysis into a durable thread memory. In 2-4 sentences "
+    "(no more), capture only the core object of analysis and the single strongest conclusion or "
+    "highest-risk open question. Do not enumerate every pass. Be terse and concrete. Output plain "
+    "prose — no headers, no lists."
+)
+
+# Cost controls. Summaries are generated short by construction; these caps are a
+# defensive backstop so a malformed/oversized stored summary can never blow up the
+# injected context. ~4 chars/token is the standard rough heuristic used only for
+# truncation — real token accounting for reporting comes from provider usage data.
+THREAD_CONTEXT_PER_SUMMARY_TOKEN_CAP = 150
+THREAD_CONTEXT_TOTAL_TOKEN_CAP = 400
+_CHARS_PER_TOKEN = 4
+
+_THREAD_SHORTHAND_RE = re.compile(r"(?:^|\s)\+([^+\n]+?)\s*$")
+
+
+def _truncate_to_tokens(text: str, max_tokens: int) -> str:
+    max_chars = max_tokens * _CHARS_PER_TOKEN
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rstrip() + "…"
+
+
+def build_thread_context_block(
+    summaries: list[str],
+    per_summary_token_cap: int = THREAD_CONTEXT_PER_SUMMARY_TOKEN_CAP,
+    total_token_cap: int = THREAD_CONTEXT_TOTAL_TOKEN_CAP,
+) -> str:
+    """Compressed context from prior session summaries, hard-capped in size.
+
+    Each summary is capped individually, then the whole block is capped again, so
+    the added context stays bounded (~300-400 tokens) no matter how large the source
+    sessions' raw outputs were.
+    """
+    lines: list[str] = []
+    for index, summary in enumerate(summaries, start=1):
+        capped = _truncate_to_tokens(summary.strip(), per_summary_token_cap)
+        if capped:
+            lines.append(f"- Prior session {index} (most recent first): {capped}")
+    return _truncate_to_tokens("\n".join(lines), total_token_cap)
+
+
+def _with_thread_context(input_text: str, thread_context: str | None) -> str:
+    if not thread_context:
+        return input_text
+    return (
+        "Prior context from this thread — compressed summaries of the last sessions, provided "
+        "ONCE here as established background. Later passes should treat this as 'prior context "
+        "noted in scope_check' rather than re-deriving it:\n"
+        f"{thread_context}\n\n"
+        f"Current input to analyze:\n{input_text}"
+    )
+
+
+def parse_thread_shorthand(text: str) -> tuple[str, str | None]:
+    """Extract a trailing '+ThreadName' shorthand.
+
+    Returns (text_with_shorthand_removed, thread_name_or_None). Thread names may
+    contain spaces (e.g. '+LP conversation'); the shorthand is expected at the end
+    of the input, matching the documented usage.
+    """
+    match = _THREAD_SHORTHAND_RE.search(text)
+    if not match:
+        return text, None
+    name = match.group(1).strip()
+    if not name:
+        return text, None
+    cleaned = (text[: match.start()] + text[match.end():]).strip()
+    return cleaned, name
+
+
+def _summary_source(payload: object) -> str:
+    """Compact source text for the summarizer: prefer synthesis, else joined passes."""
+    if isinstance(payload, dict):
+        synthesis = payload.get("synthesis")
+        if isinstance(synthesis, dict):
+            output = synthesis.get("output")
+            if isinstance(output, str) and output.strip():
+                return output
+        results = payload.get("results")
+        if isinstance(results, list):
+            parts = [
+                f"{item.get('skill', '')}: {item.get('output', '')}"
+                for item in results
+                if isinstance(item, dict) and isinstance(item.get("output"), str)
+            ]
+            if parts:
+                return "\n".join(parts)
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def summarize_session(input_text: str, payload: object, mode: str = "economy") -> str:
+    """One cheap model call producing the 2-4 sentence stored session summary.
+
+    Always uses the economy model regardless of the analysis mode, and bounds its
+    own input, so this write-time cost stays small.
+    """
+    source = _truncate_to_tokens(_summary_source(payload), 1200)
+    summarizer_input = (
+        f"Original input:\n{_truncate_to_tokens(input_text, 200)}\n\n"
+        f"Analysis to summarize:\n{source}"
+    )
+    return call_zone_model(
+        SESSION_SUMMARY_PROMPT,
+        summarizer_input,
+        skill_name="session_summary",
+        mode="economy",
+    )
+
+
 def second_brain_analysis(
     input_text: str,
     daily_capture: str | None = None,
     skip_skills: list[str] | None = None,
     mode: str = "balanced",
+    thread_context: str | None = None,
 ) -> dict[str, list[dict[str, str]]]:
     if mode not in VALID_THINKING_MODES:
         raise ValueError(f"unsupported thinking mode '{mode}'")
@@ -635,7 +757,12 @@ def second_brain_analysis(
         if name in skip_set:
             skipped.append({"skill": name, "reason": "explicitly skipped by request"})
             continue
-        results.append(SKILL_FUNCTIONS[name](input_text, daily_capture, mode))
+        # Inject the compressed thread context ONCE, into scope_check only. Every
+        # other pass receives the plain input and references it via scope_check.
+        pass_input = input_text
+        if name == "scope_check" and thread_context:
+            pass_input = _with_thread_context(input_text, thread_context)
+        results.append(SKILL_FUNCTIONS[name](pass_input, daily_capture, mode))
 
     return {"results": results, "skipped": skipped}
 
@@ -645,11 +772,15 @@ def planning_pass(
     daily_capture: str | None,
     mode: str,
     skip_skills: list[str] | None = None,
+    thread_context: str | None = None,
 ) -> dict[str, object]:
     model = _model_for_provider("planning_pass", mode)
+    # In agentic mode the planning pass is the single initial pass, so the thread
+    # context is injected here once and downstream skills receive the plain input.
+    planning_input = _with_thread_context(input_text, thread_context)
     output = call_zone_model(
         PLANNING_PROMPT,
-        input_text,
+        planning_input,
         daily_capture,
         "planning_pass",
         mode,
@@ -788,6 +919,7 @@ def agentic_second_brain_analysis(
     daily_capture: str | None = None,
     skip_skills: list[str] | None = None,
     mode: str = "balanced",
+    thread_context: str | None = None,
 ) -> dict[str, object]:
     started_at = time.perf_counter()
     if mode not in VALID_THINKING_MODES:
@@ -803,7 +935,7 @@ def agentic_second_brain_analysis(
         if name in skip_set
     ]
 
-    plan = planning_pass(input_text, daily_capture, mode, skip_skills)
+    plan = planning_pass(input_text, daily_capture, mode, skip_skills, thread_context)
     planned_skills = plan.get("recommended_skills")
     if not isinstance(planned_skills, list):
         planned_skills = CANONICAL_SKILL_ORDER.copy()

@@ -86,6 +86,7 @@ const els = {
   runAnalysis: document.querySelector("#run-analysis"),
   analysisStatus: document.querySelector("#analysis-status"),
   agenticMode: document.querySelector("#agentic-mode"),
+  includeThreadContext: document.querySelector("#include-thread-context"),
   modeDescription: document.querySelector("#mode-description"),
   skillControls: document.querySelector("#skill-controls"),
   errorBox: document.querySelector("#error-box"),
@@ -107,6 +108,16 @@ const els = {
   threadList: document.querySelector("#thread-list"),
   sessionList: document.querySelector("#session-list"),
   sessionColTitle: document.querySelector("#session-col-title"),
+  presentStatus: document.querySelector("#present-status"),
+  timeline: document.querySelector("#timeline"),
+  timelineCards: document.querySelector("#timeline-cards"),
+  presentCard: document.querySelector("#present-card"),
+  nextCard: document.querySelector("#next-card"),
+  presentDetail: document.querySelector("#present-detail"),
+  figurePresent: document.querySelector("#figure-present"),
+  figureNext: document.querySelector("#figure-next"),
+  historySearch: document.querySelector("#history-search"),
+  historyDetail: document.querySelector("#history-detail"),
 };
 
 let historyThreadId = null;
@@ -117,6 +128,7 @@ function setBusy(isBusy) {
   els.saveCapture.disabled = isBusy;
   els.runAnalysis.disabled = isBusy;
   els.agenticMode.disabled = isBusy;
+  els.includeThreadContext.disabled = isBusy;
   for (const input of els.skillControls.querySelectorAll("input:not([data-locked='true'])")) {
     input.disabled = isBusy;
   }
@@ -388,29 +400,25 @@ async function saveCapture() {
   }
 }
 
-function renderResults(data) {
+function buildSections(data) {
   const results = Array.isArray(data.results) ? data.results : [];
   const skipped = Array.isArray(data.skipped) ? data.skipped : [];
   const sections = data.agentic
-    ? [
-        data.synthesis,
-        data.plan,
-        ...results,
-        data.gap_detection,
-        data.followup,
-      ].filter(Boolean)
+    ? [data.synthesis, data.plan, ...results, data.gap_detection, data.followup].filter(Boolean)
     : results;
+  return {sections, skipped};
+}
 
-  els.results.innerHTML = "";
-  els.resultCount.textContent = `${sections.length} ${sections.length === 1 ? "brief" : "briefs"}`;
-  els.skippedCount.textContent = `${skipped.length} skipped`;
-  els.latency.textContent = typeof data.latency_ms === "number" ? `${data.latency_ms} ms` : "n/a";
-
+// Renders analysis briefs into any container — reused by the Workspace results
+// band, the Present/Next detail, and the History detail (one component, not three).
+function renderBriefsInto(container, sections) {
+  container.innerHTML = "";
   if (!sections.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "No briefs returned.";
-    els.results.appendChild(empty);
+    empty.textContent = "No briefs to show.";
+    container.appendChild(empty);
+    return;
   }
 
   sections.forEach((result, index) => {
@@ -465,8 +473,17 @@ function renderResults(data) {
       brief.appendChild(suggested);
     }
 
-    els.results.appendChild(brief);
+    container.appendChild(brief);
   });
+}
+
+function renderResults(data) {
+  const {sections, skipped} = buildSections(data);
+  els.resultCount.textContent = `${sections.length} ${sections.length === 1 ? "brief" : "briefs"}`;
+  els.skippedCount.textContent = `${skipped.length} skipped`;
+  els.latency.textContent = typeof data.latency_ms === "number" ? `${data.latency_ms} ms` : "n/a";
+
+  renderBriefsInto(els.results, sections);
 
   els.skippedList.innerHTML = "";
   if (skipped.length) {
@@ -479,6 +496,11 @@ function renderResults(data) {
   } else {
     els.skippedPanel.classList.add("hidden");
   }
+}
+
+function renderSessionDetailInto(container, rawOutput) {
+  const {sections} = buildSections(rawOutput || {});
+  renderBriefsInto(container, sections);
 }
 
 function formatTimestamp(value) {
@@ -500,7 +522,7 @@ async function loadThreads(preferredId = null) {
     const threads = Array.isArray(data.threads) ? data.threads : [];
     knownThreads = threads;
     populateThreadSelect(threads, preferredId);
-    renderThreadList(threads);
+    renderThreadList(filteredThreads());
     if (historyThreadId && threads.some(thread => thread.id === historyThreadId)) {
       renderSessionList(currentSessions);
     }
@@ -685,20 +707,21 @@ async function moveSession(sessionId, targetThreadId) {
   }
 }
 
-async function openSession(sessionId) {
+async function openSessionInto(sessionId, container) {
   clearError();
-  setStatus(els.analysisStatus, "Loading stored session…");
   try {
     const response = await fetch(`${API_BASE}/sessions/${encodeURIComponent(sessionId)}`);
     const data = await parseResponse(response);
-    const raw = data.raw_output || {};
-    renderResults(raw);
-    setStatus(els.analysisStatus, `Viewing stored session from ${formatTimestamp(data.created_at)}.`, "ok");
-    els.results.scrollIntoView({behavior: "smooth", block: "start"});
+    renderSessionDetailInto(container, data.raw_output || {});
+    container.scrollIntoView({behavior: "smooth", block: "start"});
   } catch (error) {
     showError(error.message);
-    setStatus(els.analysisStatus, "Could not load session.", "error");
   }
+}
+
+function openSession(sessionId) {
+  // From the History session list -> render the full stored output below it.
+  return openSessionInto(sessionId, els.historyDetail);
 }
 
 async function runAnalysis(options = {}) {
@@ -736,6 +759,9 @@ async function runAnalysis(options = {}) {
     if (threadId) {
       body.thread_id = threadId;
     }
+    if (els.includeThreadContext.checked) {
+      body.include_thread_context = true;
+    }
     const response = await fetch(`${API_BASE}/second-brain`, {
       method: "POST",
       headers: {"content-type": "application/json"},
@@ -744,14 +770,22 @@ async function runAnalysis(options = {}) {
     const data = await parseResponse(response);
     renderResults(data);
     const landedThreadId = data.thread_id || threadId;
-    setStatus(
-      els.analysisStatus,
-      threadId ? "Analysis packet complete." : "Analysis packet complete (captured to Uncategorized).",
-      "ok",
-    );
-    // Persisted — refresh the thread list (the server may have just created
-    // Uncategorized), and reload the viewed thread's sessions if it changed.
-    await loadThreads(selectedThreadId() || null);
+
+    let message = "Analysis packet complete.";
+    if (data.shorthand_thread) {
+      message = `Analysis packet complete — routed to "${data.shorthand_thread}" via +shorthand.`;
+    } else if (!threadId) {
+      message = "Analysis packet complete (captured to Uncategorized).";
+    }
+    if (data.thread_context_injected) {
+      message += " Prior thread context injected.";
+    }
+    setStatus(els.analysisStatus, message, "ok");
+
+    // Persisted — refresh the thread list (the server may have created Uncategorized
+    // or routed via shorthand), select the thread it actually landed in, and reload
+    // that thread's sessions if it's the one on screen.
+    await loadThreads(landedThreadId || selectedThreadId() || null);
     if (historyThreadId && historyThreadId === landedThreadId) {
       await loadThreadSessions(landedThreadId);
     }
@@ -764,10 +798,141 @@ async function runAnalysis(options = {}) {
   }
 }
 
+// ---------------- Navigation between the three views ----------------
+const VIEWS = ["workspace", "present", "history"];
+
+function showView(name) {
+  for (const tab of document.querySelectorAll(".tab")) {
+    tab.classList.toggle("is-active", tab.dataset.view === name);
+  }
+  for (const view of VIEWS) {
+    const section = document.querySelector(`#view-${view}`);
+    const active = view === name;
+    section.classList.toggle("is-active", active);
+    section.hidden = !active;
+  }
+  if (name === "present") {
+    loadPresentFuture();
+  }
+}
+
+// ---------------- Present / Next timeline ----------------
+function cardFragment(kicker, title, body, meta) {
+  const frag = document.createDocumentFragment();
+  if (kicker) {
+    const k = document.createElement("p");
+    k.className = "card-kicker";
+    k.textContent = kicker;
+    frag.appendChild(k);
+  }
+  if (title) {
+    const t = document.createElement("h3");
+    t.className = "card-title";
+    t.textContent = title;
+    frag.appendChild(t);
+  }
+  const b = document.createElement("p");
+  b.className = "card-body";
+  b.textContent = body;
+  frag.appendChild(b);
+  if (meta) {
+    const m = document.createElement("p");
+    m.className = "card-meta";
+    m.textContent = meta;
+    frag.appendChild(m);
+  }
+  return frag;
+}
+
+function renderPresent(data) {
+  const present = data && data.present;
+  els.presentDetail.innerHTML = "";
+
+  if (!present) {
+    els.presentStatus.textContent = "No sessions yet — run an analysis in Workspace to populate your timeline.";
+    els.timeline.hidden = true;
+    els.timelineCards.hidden = true;
+    return;
+  }
+
+  els.presentStatus.textContent = "";
+  els.timeline.hidden = false;
+  els.timelineCards.hidden = false;
+
+  const summaryText = present.summary && present.summary.trim()
+    ? present.summary
+    : (present.input_excerpt || "(no summary stored)");
+  els.presentCard.innerHTML = "";
+  els.presentCard.appendChild(
+    cardFragment("Now — latest thought", present.thread_name || "thread", summaryText, formatTimestamp(present.created_at))
+  );
+
+  const next = data.next;
+  els.nextCard.innerHTML = "";
+  if (next && next.synthesis) {
+    els.nextCard.classList.remove("muted");
+    els.nextCard.appendChild(
+      cardFragment("Next — open questions & next steps", next.thread_name || "", next.synthesis, "From your latest synthesis")
+    );
+    els.figureNext.disabled = false;
+    els.figureNext.onclick = () => openSessionInto(present.session_id, els.presentDetail);
+  } else {
+    els.nextCard.classList.add("muted");
+    els.nextCard.appendChild(
+      cardFragment(
+        "Next — open questions & next steps",
+        "",
+        "No synthesized next-steps yet. Run an agentic analysis (Agentic multi-pass) and its synthesis will appear here.",
+        ""
+      )
+    );
+    els.figureNext.disabled = true;
+    els.figureNext.onclick = null;
+  }
+
+  els.figurePresent.onclick = () => openSessionInto(present.session_id, els.presentDetail);
+}
+
+async function loadPresentFuture() {
+  els.presentStatus.textContent = "Loading…";
+  els.timeline.hidden = true;
+  els.timelineCards.hidden = true;
+  els.presentDetail.innerHTML = "";
+  try {
+    const response = await fetch(`${API_BASE}/present-future`);
+    const data = await parseResponse(response);
+    renderPresent(data);
+  } catch (error) {
+    els.presentStatus.textContent = `Could not load timeline: ${error.message}`;
+  }
+}
+
+// ---------------- History search / filter ----------------
+let historyQuery = "";
+
+function filteredThreads() {
+  const query = historyQuery.trim().toLowerCase();
+  if (!query) {
+    return knownThreads;
+  }
+  return knownThreads.filter(thread =>
+    (thread.name || "").toLowerCase().includes(query) ||
+    formatTimestamp(thread.updated_at).toLowerCase().includes(query)
+  );
+}
+
 renderSkillControls();
 updateModeDescription();
 loadZoneStatus();
 loadThreads();
+
+for (const tab of document.querySelectorAll(".tab")) {
+  tab.addEventListener("click", () => showView(tab.dataset.view));
+}
+els.historySearch.addEventListener("input", () => {
+  historyQuery = els.historySearch.value;
+  renderThreadList(filteredThreads());
+});
 
 els.saveCapture.addEventListener("click", saveCapture);
 els.runAnalysis.addEventListener("click", runAnalysis);
