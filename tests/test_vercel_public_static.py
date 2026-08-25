@@ -49,6 +49,7 @@ class VercelPublicStaticTests(unittest.TestCase):
         )
 
         self.assertIn("/api/ask-rahul", combined)
+        self.assertIn("/api/thinking-window", combined)
         self.assertIn("/api/contact-request", combined)
         self.assertIn("https://aksharthewriter.vercel.app/offline", combined)
         self.assertIn("https://sahayakhq.co/", combined)
@@ -67,6 +68,24 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertNotIn("interview question", combined.lower())
         self.assertNotIn("caveat", combined.lower())
         self.assertNotIn("How is Rahul doing at his present job?", combined)
+
+    def test_thinking_window_uses_separate_endpoint_from_ask_rahul(self):
+        app_js = (PUBLIC_DIR / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('const ASK_RAHUL_ENDPOINT = "/api/ask-rahul"', app_js)
+        self.assertIn('const THINKING_WINDOW_ENDPOINT = "/api/thinking-window"', app_js)
+        self.assertIn("endpointForSurface", app_js)
+        self.assertIn('surface.dataset.sourcePage === "thinking_window"', app_js)
+        self.assertIn("fetch(apiPath(endpointForSurface(surface))", app_js)
+
+    def test_thinking_window_contact_gate_is_preserved(self):
+        app_js = (PUBLIC_DIR / "app.js").read_text(encoding="utf-8")
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn("rahul-thinking-window-count", app_js)
+        self.assertIn("incrementThinkingCount", app_js)
+        self.assertIn("next >= 2", app_js)
+        self.assertIn("data-soft-contact", html)
 
     def test_answer_surfaces_are_local_to_their_modules(self):
         html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")

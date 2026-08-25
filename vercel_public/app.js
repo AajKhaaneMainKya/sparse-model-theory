@@ -1,5 +1,6 @@
 const pages = new Set(["/", "/thinking-window", "/contact"]);
 const ASK_RAHUL_ENDPOINT = "/api/ask-rahul";
+const THINKING_WINDOW_ENDPOINT = "/api/thinking-window";
 const CONTACT_ENDPOINT = "/api/contact-request";
 const THINKING_COUNT_KEY = "rahul-thinking-window-count";
 const CONTACT_PROFILE_KEY = "rahul-public-contact";
@@ -102,6 +103,10 @@ function statusText(evidenceCount) {
   return evidenceCount ? "Evidence-backed" : "Bounded by public evidence";
 }
 
+function endpointForSurface(surface) {
+  return surface.dataset.sourcePage === "thinking_window" ? THINKING_WINDOW_ENDPOINT : ASK_RAHUL_ENDPOINT;
+}
+
 function setSurfaceLoading(surface, question) {
   const output = surface.querySelector("[data-ask-output]");
   const label = surface.querySelector("[data-question-label]");
@@ -117,7 +122,7 @@ function setSurfaceLoading(surface, question) {
   evidence.innerHTML = "";
 }
 
-function renderEvidence(surface, items) {
+function renderEvidence(surface, items, label = "Evidence trail") {
   const evidence = surface.querySelector("[data-evidence-list]");
   evidence.innerHTML = "";
 
@@ -136,7 +141,7 @@ function renderEvidence(surface, items) {
     const excerpt = document.createElement("p");
 
     meta.className = "evidence-source";
-    meta.textContent = `${source.file} · ${source.section}`;
+    meta.textContent = `${label}: ${source.file} · ${source.section}`;
     excerpt.textContent = item.excerpt || "";
 
     row.append(meta, excerpt);
@@ -149,14 +154,14 @@ function renderAnswer(surface, question, data) {
   const label = surface.querySelector("[data-question-label]");
   const status = surface.querySelector("[data-ask-status]");
   const answer = surface.querySelector("[data-answer-text]");
-  const evidenceItems = data.evidence || [];
+  const evidenceItems = data.evidence || data.grounding || [];
 
   output.hidden = false;
   output.dataset.state = "ready";
   label.textContent = question;
-  status.textContent = statusText(evidenceItems.length);
+  status.textContent = data.status === "blocked" ? "Blocked" : statusText(evidenceItems.length);
   answer.textContent = data.answer || "";
-  renderEvidence(surface, evidenceItems);
+  renderEvidence(surface, evidenceItems, data.mode === "thinking_window" ? "Grounding" : "Evidence trail");
 }
 
 function renderAskError(surface, question, message) {
@@ -188,7 +193,7 @@ async function askFromSurface(surface, question) {
   setSurfaceLoading(surface, cleaned);
 
   try {
-    const response = await fetch(apiPath(ASK_RAHUL_ENDPOINT), {
+    const response = await fetch(apiPath(endpointForSurface(surface)), {
       method: "POST",
       headers: {"content-type": "application/json"},
       body: JSON.stringify({

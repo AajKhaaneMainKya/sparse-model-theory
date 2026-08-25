@@ -29,7 +29,7 @@ from engine.note import Note, NoteValidationError, load_note, load_notes, parse_
 
 from . import db
 from . import public_portfolio
-from .public_portfolio import AskRahulRequest, ask_rahul
+from .public_portfolio import AskRahulRequest, ThinkingWindowRequest, ask_rahul, thinking_window
 from .zone import (
     DAILY_DIR,
     DEFAULT_OLLAMA_MODEL,
@@ -698,6 +698,26 @@ def ask_rahul_endpoint(request: AskRahulRequest) -> dict[str, object]:
         contact_email=_clean_public_text(request.contact_email, max_chars=254),
         contact_phone=_clean_public_text(request.contact_phone, max_chars=60),
     )
+    return result
+
+
+@app.post("/thinking-window")
+def thinking_window_endpoint(request: ThinkingWindowRequest) -> dict[str, object]:
+    question = _clean_public_text(request.question, max_chars=1600) or ""
+    result = thinking_window(question.strip())
+    grounding = result.get("grounding")
+    grounding_count = len(grounding) if isinstance(grounding, list) else 0
+    status = str(result.get("status") or "insufficient")
+    logged_question = "[redacted unsafe public question]" if status == "blocked" else question
+    db.add_public_question_log(
+        question=logged_question,
+        answer_status=status,
+        evidence_count=grounding_count,
+        source_page="thinking_window",
+        contact_email=_clean_public_text(request.contact_email, max_chars=254),
+        contact_phone=_clean_public_text(request.contact_phone, max_chars=60),
+    )
+    result["logged"] = True
     return result
 
 

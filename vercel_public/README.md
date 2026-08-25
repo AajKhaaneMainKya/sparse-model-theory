@@ -17,6 +17,7 @@ The FastAPI backend lives on Railway. The static frontend calls:
 
 ```text
 /api/ask-rahul
+/api/thinking-window
 /api/contact-request
 ```
 
