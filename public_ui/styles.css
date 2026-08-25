@@ -73,11 +73,29 @@ a { color: inherit; text-decoration: none; }
 }
 
 .brand {
-  display: inline-flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 36px auto;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
   width: fit-content;
   line-height: 1.05;
   font-weight: 760;
+}
+
+.brand-mark {
+  grid-row: 1 / span 2;
+  width: 36px;
+  height: 36px;
+  color: var(--accent);
+}
+
+.brand-mark path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .brand small {
@@ -583,6 +601,24 @@ select:focus {
 .form-status.ok { color: var(--accent-2); }
 .form-status.error { color: var(--danger); }
 
+.site-footer {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 28px 0 34px;
+  border-top: 1px solid var(--line);
+  color: var(--quiet);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer p + p {
+  margin-top: 4px;
+}
+
 @keyframes reveal {
   from {
     opacity: 0;
@@ -643,6 +679,10 @@ select:focus {
 
 @media (max-width: 640px) {
   main {
+    width: min(100% - 28px, 1180px);
+  }
+
+  .site-footer {
     width: min(100% - 28px, 1180px);
   }
 

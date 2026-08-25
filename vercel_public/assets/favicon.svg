@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Ask Rahul bracket window mark</title>
+  <rect width="64" height="64" rx="12" fill="#181713"/>
+  <path d="M23 15h-8v34h8" fill="none" stroke="#dd8b62" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M41 15h8v34h-8" fill="none" stroke="#dd8b62" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 24h16M24 32h11M24 40h16" fill="none" stroke="#f2eadc" stroke-width="3.2" stroke-linecap="round"/>
+</svg>

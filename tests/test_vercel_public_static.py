@@ -33,6 +33,8 @@ class VercelPublicStaticTests(unittest.TestCase):
             {
                 ".vercelignore",
                 "README.md",
+                "assets/ask-rahul-og.svg",
+                "assets/favicon.svg",
                 "assets/rahul.jpg",
                 "assets/rahul.jpg.README.md",
                 "app.js",
@@ -51,6 +53,8 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertIn("/api/ask-rahul", combined)
         self.assertIn("/api/thinking-window", combined)
         self.assertIn("/api/contact-request", combined)
+        self.assertIn("/assets/ask-rahul-og.svg", combined)
+        self.assertIn("/assets/favicon.svg", combined)
         self.assertIn("https://aksharthewriter.vercel.app/offline", combined)
         self.assertIn("https://sahayakhq.co/", combined)
         self.assertIn("rahul.jpg", combined)
@@ -71,6 +75,50 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertNotIn("interview question", combined.lower())
         self.assertNotIn("caveat", combined.lower())
         self.assertNotIn("How is Rahul doing at his present job?", combined)
+
+    def test_public_metadata_and_preview_identity(self):
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+        favicon = PUBLIC_DIR / "assets" / "favicon.svg"
+        preview = PUBLIC_DIR / "assets" / "ask-rahul-og.svg"
+
+        self.assertTrue(favicon.exists())
+        self.assertTrue(preview.exists())
+        self.assertIn("<title>Ask Rahul — Public Work Model</title>", html)
+        self.assertIn('name="description"', html)
+        self.assertIn("Ask evidence-backed questions", html)
+        self.assertIn('property="og:title" content="Ask Rahul"', html)
+        self.assertIn('property="og:description"', html)
+        self.assertIn('property="og:image" content="/assets/ask-rahul-og.svg"', html)
+        self.assertIn('property="og:type" content="website"', html)
+        self.assertIn('name="twitter:card" content="summary_large_image"', html)
+        self.assertIn('name="twitter:title" content="Ask Rahul"', html)
+        self.assertIn('name="twitter:description"', html)
+        self.assertIn('name="twitter:image" content="/assets/ask-rahul-og.svg"', html)
+        self.assertIn('rel="icon" href="/assets/favicon.svg"', html)
+        self.assertIn("Ask Rahul", preview.read_text(encoding="utf-8"))
+        self.assertIn("Rahul Shiv Shankar", preview.read_text(encoding="utf-8"))
+        self.assertIn("Public proof. Clear judgment.", preview.read_text(encoding="utf-8"))
+
+        head = html.split("</head>", 1)[0]
+        self.assertNotIn("/admin", head)
+        self.assertNotIn("/console", head)
+        self.assertNotIn("private", head.lower())
+
+    def test_footer_has_copyright_and_employer_disclaimer(self):
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+        copyright_text = "© 2026 Rahul Shiv Shankar. All rights reserved."
+        disclaimer = "Views expressed here are my own and do not represent my employer."
+
+        self.assertIn("<footer", html)
+        footer = html.split("<footer", 1)[1].split("</footer>", 1)[0]
+        self.assertIn(copyright_text, footer)
+        self.assertIn(disclaimer, footer)
+
+        hero_start = html.index('class="hero-shell"')
+        hero_end = html.index('id="public-proof"')
+        hero = html[hero_start:hero_end]
+        self.assertNotIn(copyright_text, hero)
+        self.assertNotIn(disclaimer, hero)
 
     def test_thinking_window_uses_separate_endpoint_from_ask_rahul(self):
         app_js = (PUBLIC_DIR / "app.js").read_text(encoding="utf-8")
