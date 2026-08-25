@@ -3,163 +3,150 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rahul | Thinking Portfolio</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <title>Rahul Shiv Shankar | Public Portfolio</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="/" data-route>Rahul</a>
-    <nav aria-label="Public portfolio">
-      <a href="/" data-route>Overview</a>
-      <a href="/projects" data-route>Projects</a>
-      <a href="/ask" data-route>Ask Rahul</a>
+    <a class="brand" href="/" data-route>Rahul Shiv Shankar</a>
+    <nav aria-label="Public navigation">
+      <a href="/" data-route>Portfolio</a>
+      <a href="/thinking-window" data-route>Thinking Window</a>
       <a href="/contact" data-route>Contact</a>
     </nav>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">◐</button>
   </header>
 
   <main>
-    <section class="hero" data-page="home">
+    <section class="hero" data-page="portfolio">
       <div class="hero-copy">
-        <p class="kicker">AI product systems / bounded reasoning / operator judgment</p>
-        <h1>Thinking portfolio for ambiguous AI product work.</h1>
-        <p class="lede">
-          Public proof that Rahul can turn open-ended questions into bounded systems:
-          deterministic routing, semantic retrieval, FastAPI surfaces, OpenAI-compatible model calls,
-          local fallback behavior, and honest caveats when evidence runs out.
-        </p>
-        <form class="ask-strip" data-ask-form>
-          <input name="question" type="search" placeholder="Ask about Rahul's work..." autocomplete="off" />
-          <button type="submit">Ask</button>
+        <p class="kicker">Product judgment / GTM depth / agentic systems</p>
+        <h1>Rahul Shiv Shankar</h1>
+        <p class="positioning">An operator-builder for ambiguous product bets, founder-speed execution, and AI systems that need judgment before scale.</p>
+        <form class="ask-surface" data-ask-form data-source-page="portfolio">
+          <input name="question" type="search" placeholder="Ask Rahul from public evidence..." autocomplete="off" />
+          <button type="submit">Ask Rahul</button>
         </form>
+        <p class="evidence-line">Answers from public projects, resumes, and proof-of-work.</p>
       </div>
-      <div class="proof-panel" aria-label="Portfolio signals">
-        <div>
+      <aside class="portrait-panel" aria-label="Rahul photo">
+        <img src="assets/rahul.jpg" alt="Rahul Shiv Shankar" data-portrait />
+        <div class="portrait-fallback">R</div>
+      </aside>
+    </section>
+
+    <section class="proof-section" data-page="portfolio">
+      <div class="section-heading">
+        <p class="kicker">Public proof</p>
+        <h2>Built work, not just claims.</h2>
+      </div>
+      <div class="project-rows">
+        <a class="project-row feature-link" href="https://aksharthewriter.vercel.app/offline" target="_blank" rel="noopener">
           <span>01</span>
-          <strong>Agentic systems</strong>
-          <p>Planning, gap detection, optional follow-up, synthesis, and bounded execution surfaces.</p>
-        </div>
-        <div>
+          <strong>Akshar</strong>
+          <p>Agentic writing system with a staged content pipeline and voice-sensitive execution.</p>
+          <em>Open proof</em>
+        </a>
+        <a class="project-row feature-link" href="https://sahayakhq.co/" target="_blank" rel="noopener">
           <span>02</span>
-          <strong>Applied AI stack</strong>
-          <p>FastAPI, OpenAI-compatible providers, local model fallback, retrieval, SQLite, browser UI.</p>
-        </div>
-        <div>
+          <strong>Sahayak</strong>
+          <p>Hiring marketplace and LLM-assisted matching direction for Indian startup talent.</p>
+          <em>Open proof</em>
+        </a>
+        <div class="project-row">
           <span>03</span>
-          <strong>Ambiguity discipline</strong>
-          <p>Scope checks, caveats, missing-evidence behavior, and explicit public/private boundaries.</p>
+          <strong>Sparse Model Theory</strong>
+          <p>Deterministic routing, schema-bound reasoning, public evidence boundaries, and retrieval discipline.</p>
+          <em>Evidence trail</em>
+        </div>
+        <div class="project-row">
+          <span>04</span>
+          <strong>OpenClaw Demo</strong>
+          <p>A public agent surface that separates flexible input from bounded backend behavior.</p>
+          <em>Evidence trail</em>
         </div>
       </div>
     </section>
 
-    <section class="section-band" data-page="home">
+    <section class="judgment-section" data-page="portfolio">
       <div class="section-heading">
-        <p class="kicker">Proof of work</p>
-        <h2>What the public corpus supports</h2>
+        <p class="kicker">Work Model</p>
+        <h2>Where Rahul tends to be useful.</h2>
       </div>
-      <div class="signal-grid">
-        <article>
-          <h3>Built agentic interfaces</h3>
-          <p>Open-ended entry points with constrained backend contracts, including `/openclaw/agent`.</p>
-        </article>
-        <article>
-          <h3>Works across model paths</h3>
-          <p>OpenAI-compatible calls, Ollama-style local fallback, structured prompts, and failure-aware responses.</p>
-        </article>
-        <article>
-          <h3>Reasons through uncertainty</h3>
-          <p>Designs systems that state unknowns, separate evidence from claims, and avoid overreach.</p>
-        </article>
+      <div class="judgment-grid">
+        <p><strong>Product judgment</strong><br />Turns vague user and business pressure into buildable product surfaces.</p>
+        <p><strong>GTM depth</strong><br />Understands funnels, pricing, P&L, campaigns, sales feedback, and operating cadence.</p>
+        <p><strong>Agentic systems</strong><br />Builds around retrieval, constraints, fallback behavior, and evidence-backed answers.</p>
+        <p><strong>Education</strong><br />MBA at BITSoM / BITS Pilani School of Management; engineering foundation from Jamia Millia Islamia.</p>
+        <p><strong>Community</strong><br />Hosted buildathons, mentored teams, and works well around high-agency builders.</p>
       </div>
     </section>
 
-    <section class="section-band" data-page="projects">
+    <section class="ask-page" data-page="thinking">
       <div class="section-heading">
-        <p class="kicker">Projects</p>
-        <h2>Public portfolio artifacts</h2>
+        <p class="kicker">Thinking Window</p>
+        <h2>Open a public reasoning surface.</h2>
       </div>
-      <div class="project-list">
-        <article>
-          <span class="project-index">01</span>
-          <div>
-            <h3>Sparse Model Theory</h3>
-            <p>Deterministic routing, note schema, semantic retrieval, and bounded orchestration for contested reasoning.</p>
-          </div>
-        </article>
-        <article>
-          <span class="project-index">02</span>
-          <div>
-            <h3>Second Brain Console</h3>
-            <p>FastAPI, OpenAI provider path, local model fallback, thinking modes, thread context, and UI for analysis packets.</p>
-          </div>
-        </article>
-        <article>
-          <span class="project-index">03</span>
-          <div>
-            <h3>OpenClaw Demo</h3>
-            <p>Open-ended interface with bounded execution at `/openclaw/agent`, including explicit no-tool and no-arbitrary-file-read boundaries.</p>
-          </div>
-        </article>
-        <article>
-          <span class="project-index">04</span>
-          <div>
-            <h3>Akshar / Sahayak</h3>
-            <p>Included only as high-level project references until more public-safe detail is added to the corpus.</p>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="ask-page section-band" data-page="ask">
-      <div class="section-heading">
-        <p class="kicker">Ask Rahul</p>
-        <h2>Ask against the public proof corpus</h2>
-      </div>
-      <form class="ask-box" data-ask-form>
-        <input name="question" type="search" placeholder="Ask about Rahul's work..." autocomplete="off" />
-        <button type="submit">Ask</button>
+      <form class="ask-surface wide" data-ask-form data-source-page="thinking_window">
+        <input name="question" type="search" placeholder="Ask how Rahul would reason through a problem..." autocomplete="off" />
+        <button type="submit">Open</button>
       </form>
-      <div class="chips" aria-label="Example questions">
-        <button type="button" data-question="Has Rahul built agentic systems?">Has Rahul built agentic systems?</button>
-        <button type="button" data-question="What has Rahul built with OpenAI?">What has Rahul built with OpenAI?</button>
-        <button type="button" data-question="Is Rahul strong at ambiguous product thinking?">Is Rahul strong at ambiguous product thinking?</button>
-        <button type="button" data-question="What should I interview Rahul about?">What should I interview Rahul about?</button>
-        <button type="button" data-question="Has Rahul shipped production systems?">Has Rahul shipped production systems?</button>
+      <div class="chips" aria-label="Thinking Window prompts">
+        <button type="button" data-question="How would Rahul think through a messy GTM problem?" data-source-page="thinking_window">Messy GTM problem</button>
+        <button type="button" data-question="How does Rahul evaluate whether to build?" data-source-page="thinking_window">Build or not</button>
+        <button type="button" data-question="What patterns does Rahul notice in founder-led products?" data-source-page="thinking_window">Founder-led products</button>
+        <button type="button" data-question="How would Rahul reason about agentic systems?" data-source-page="thinking_window">Agentic systems</button>
+        <button type="button" data-question="What kind of problems does Rahul seem built for?" data-source-page="thinking_window">Problem fit</button>
       </div>
-      <div id="ask-status" class="status" aria-live="polite"></div>
-      <section id="ask-results" class="ask-results" hidden>
-        <article class="answer-block">
-          <p class="kicker">Answer</p>
-          <div id="answer-text"></div>
-        </article>
-        <div class="result-columns">
-          <section>
-            <h3>Evidence</h3>
-            <div id="evidence-list" class="evidence-list"></div>
-          </section>
-          <section>
-            <h3>Caveats</h3>
-            <ul id="caveat-list"></ul>
-            <h3>Interview Questions</h3>
-            <ul id="interview-list"></ul>
-          </section>
-        </div>
+      <section class="soft-contact" data-soft-contact hidden>
+        <p>If this is useful, leave a way to continue the conversation.</p>
+        <form data-inline-contact-form>
+          <input name="name" placeholder="Name" autocomplete="name" />
+          <input name="email" type="email" placeholder="Email" autocomplete="email" required />
+          <input name="phone" placeholder="Phone" autocomplete="tel" />
+          <select name="context_type" aria-label="Context type">
+            <option value="founder">Founder</option>
+            <option value="recruiter">Recruiter</option>
+            <option value="collaborator">Collaborator</option>
+            <option value="other">Other</option>
+          </select>
+          <input name="message" placeholder="Context" required />
+          <button type="submit">Send</button>
+        </form>
       </section>
     </section>
 
-    <section class="section-band" data-page="contact">
+    <section id="answer-zone" class="answer-zone" hidden>
+      <div class="answer-head">
+        <p class="kicker">Answer</p>
+        <div id="ask-status" class="status" aria-live="polite"></div>
+      </div>
+      <article id="answer-text" class="answer-text"></article>
+      <div id="evidence-list" class="evidence-list" aria-label="Evidence trail"></div>
+    </section>
+
+    <section class="contact-page" data-page="contact">
       <div class="section-heading">
-        <p class="kicker">Contact / links</p>
-        <h2>Public links belong in the corpus</h2>
+        <p class="kicker">Contact Rahul</p>
+        <h2>Leave a clear signal.</h2>
       </div>
-      <div class="contact-panel">
-        <p>
-          This repository/session does not include verified public contact links. Add sanitized links to
-          `public_corpus/profile.md` before publishing them here.
-        </p>
-      </div>
+      <form class="contact-form" data-contact-form>
+        <input name="name" placeholder="Name" autocomplete="name" />
+        <input name="email" type="email" placeholder="Email" autocomplete="email" required />
+        <input name="phone" placeholder="Phone number" autocomplete="tel" />
+        <select name="context_type" aria-label="Context type">
+          <option value="founder">Founder</option>
+          <option value="recruiter">Recruiter</option>
+          <option value="collaborator">Collaborator</option>
+          <option value="other">Other</option>
+        </select>
+        <textarea name="message" placeholder="Message or context" required></textarea>
+        <button type="submit">Contact Rahul</button>
+      </form>
+      <p id="contact-status" class="status" aria-live="polite"></p>
     </section>
   </main>
 
-  <script src="/app.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>

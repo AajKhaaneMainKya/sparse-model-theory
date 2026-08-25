@@ -3,36 +3,59 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rahul Admin | Resume Upload</title>
+  <title>Rahul Admin</title>
   <link rel="stylesheet" href="/admin-static/styles.css" />
 </head>
 <body>
   <main class="admin-shell">
     <section class="admin-panel" aria-labelledby="admin-title">
-      <p class="kicker">Local admin</p>
-      <h1 id="admin-title">Resume Upload</h1>
-      <p class="note">Uploaded resumes become part of the public Ask Rahul corpus.</p>
+      <p class="kicker">Private admin</p>
+      <h1 id="admin-title">Public Portfolio Ops</h1>
+      <p class="note">Resume ingestion, contact requests, and public question logs.</p>
 
-      <form id="resume-form">
-        <label for="resume-file">Resume file</label>
-        <input
-          id="resume-file"
-          name="resume"
-          type="file"
-          accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          required
-        />
-
-        <label for="resume-label">Label</label>
-        <input id="resume-label" name="label" type="text" placeholder="product-lead-resume" autocomplete="off" />
-
-        <label for="admin-token">Admin token</label>
-        <input id="admin-token" name="adminToken" type="password" autocomplete="off" />
-
-        <button type="submit">Upload Resume</button>
+      <form id="login-form" class="login-form">
+        <label for="admin-password">Admin password</label>
+        <input id="admin-password" name="password" type="password" autocomplete="current-password" required />
+        <button type="submit">Unlock Admin</button>
       </form>
 
-      <div id="upload-status" class="status" aria-live="polite"></div>
+      <div id="admin-dashboard" hidden>
+        <div class="admin-actions">
+          <button type="button" id="refresh-admin">Refresh</button>
+          <button type="button" id="logout-admin">Logout</button>
+        </div>
+
+        <section>
+          <h2>Resume Upload</h2>
+          <p class="note">Uploaded resumes become part of the public Ask Rahul corpus and structured fact store.</p>
+          <form id="resume-form">
+            <label for="resume-file">Resume file</label>
+            <input
+              id="resume-file"
+              name="resume"
+              type="file"
+              accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              required
+            />
+            <label for="resume-label">Label</label>
+            <input id="resume-label" name="label" type="text" placeholder="product-lead-resume" autocomplete="off" />
+            <button type="submit">Upload Resume</button>
+          </form>
+          <div id="upload-status" class="status" aria-live="polite"></div>
+        </section>
+
+        <section>
+          <h2>Contact Requests</h2>
+          <div id="contact-requests" class="log-list"></div>
+        </section>
+
+        <section>
+          <h2>Public Question Logs</h2>
+          <div id="question-logs" class="log-list"></div>
+        </section>
+      </div>
+
+      <div id="admin-status" class="status" aria-live="polite"></div>
     </section>
   </main>
 

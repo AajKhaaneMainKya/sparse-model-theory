@@ -200,6 +200,9 @@ PROMPT_INJECTION_PATTERNS = [
 
 class AskRahulRequest(BaseModel):
     question: str = Field(min_length=1)
+    source_page: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
 
 
 @dataclass(frozen=True)

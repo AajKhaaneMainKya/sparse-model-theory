@@ -13,6 +13,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/thinking-window",
+      "destination": "/index.html"
+    },
+    {
       "source": "/contact",
       "destination": "/index.html"
     }

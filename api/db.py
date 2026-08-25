@@ -50,6 +50,35 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_thread_created
     ON sessions(thread_id, created_at);
+
+CREATE TABLE IF NOT EXISTS contact_requests (
+    id                  TEXT PRIMARY KEY,
+    name                TEXT,
+    email               TEXT NOT NULL,
+    phone               TEXT,
+    context_type        TEXT,
+    message             TEXT NOT NULL,
+    source              TEXT NOT NULL,
+    notification_status TEXT NOT NULL,
+    created_at          TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_requests_created
+    ON contact_requests(created_at);
+
+CREATE TABLE IF NOT EXISTS public_question_logs (
+    id             TEXT PRIMARY KEY,
+    question       TEXT NOT NULL,
+    answer_status  TEXT NOT NULL,
+    evidence_count INTEGER NOT NULL,
+    source_page    TEXT NOT NULL,
+    contact_email  TEXT,
+    contact_phone  TEXT,
+    created_at     TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_public_question_logs_created
+    ON public_question_logs(created_at);
 """
 
 # Columns added after the original schema shipped, applied idempotently to any
@@ -118,6 +147,131 @@ def init_db() -> None:
     """Ensure the schema exists for the active database path."""
     with _connect():
         pass
+
+
+def add_contact_request(
+    *,
+    name: str | None,
+    email: str,
+    phone: str | None,
+    context_type: str | None,
+    message: str,
+    source: str,
+    notification_status: str = "pending",
+) -> dict[str, str | None]:
+    request_id = str(uuid.uuid4())
+    now = _now()
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO contact_requests (
+                id, name, email, phone, context_type, message, source,
+                notification_status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                request_id,
+                name,
+                email,
+                phone,
+                context_type,
+                message,
+                source,
+                notification_status,
+                now,
+            ),
+        )
+    return {
+        "id": request_id,
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "context_type": context_type,
+        "message": message,
+        "source": source,
+        "notification_status": notification_status,
+        "created_at": now,
+    }
+
+
+def update_contact_notification_status(request_id: str, status: str) -> None:
+    with _connect() as conn:
+        conn.execute(
+            "UPDATE contact_requests SET notification_status = ? WHERE id = ?",
+            (status, request_id),
+        )
+
+
+def list_contact_requests(limit: int = 100) -> list[dict[str, object]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, name, email, phone, context_type, message, source,
+                   notification_status, created_at
+            FROM contact_requests
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def add_public_question_log(
+    *,
+    question: str,
+    answer_status: str,
+    evidence_count: int,
+    source_page: str,
+    contact_email: str | None,
+    contact_phone: str | None,
+) -> dict[str, str | int | None]:
+    log_id = str(uuid.uuid4())
+    now = _now()
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO public_question_logs (
+                id, question, answer_status, evidence_count, source_page,
+                contact_email, contact_phone, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                log_id,
+                question,
+                answer_status,
+                evidence_count,
+                source_page,
+                contact_email,
+                contact_phone,
+                now,
+            ),
+        )
+    return {
+        "id": log_id,
+        "question": question,
+        "answer_status": answer_status,
+        "evidence_count": evidence_count,
+        "source_page": source_page,
+        "contact_email": contact_email,
+        "contact_phone": contact_phone,
+        "created_at": now,
+    }
+
+
+def list_public_question_logs(limit: int = 100) -> list[dict[str, object]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, question, answer_status, evidence_count, source_page,
+                   contact_email, contact_phone, created_at
+            FROM public_question_logs
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def create_thread(name: str) -> dict[str, str]:

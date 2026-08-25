@@ -5,6 +5,8 @@ from datetime import date, datetime
 import difflib
 from email.parser import BytesParser
 from email.policy import default
+import hashlib
+import hmac
 from io import BytesIO
 import json
 import logging
@@ -13,10 +15,12 @@ from pathlib import Path
 import re
 import time
 from typing import Literal
+from urllib import request as urlrequest
+from urllib.error import URLError
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -45,6 +49,8 @@ EXAMPLES_DIR = ROOT / "examples"
 UI_DIR = ROOT / "ui"
 PUBLIC_UI_DIR = ROOT / "public_ui"
 ADMIN_UI_DIR = ROOT / "admin_ui"
+ADMIN_COOKIE_NAME = "rahul_admin_session"
+ADMIN_COOKIE_MAX_AGE = 60 * 60 * 8
 
 
 app = FastAPI(title="Sparse Model Theory API")
@@ -106,6 +112,19 @@ class ThreadCreateRequest(BaseModel):
 
 class SessionMoveRequest(BaseModel):
     thread_id: str = Field(min_length=1)
+
+
+class AdminLoginRequest(BaseModel):
+    password: str = Field(min_length=1)
+
+
+class ContactRequest(BaseModel):
+    name: str | None = None
+    email: str = Field(min_length=1)
+    phone: str | None = None
+    context_type: Literal["founder", "recruiter", "collaborator", "other"] | None = None
+    message: str = Field(min_length=1)
+    source: Literal["portfolio", "thinking_window", "contact"] = "contact"
 
 
 def note_summary(note: Note) -> dict[str, object]:
@@ -198,18 +217,135 @@ def _timestamp_slug(now: datetime | None = None) -> str:
     return (now or datetime.now()).strftime("%Y%m%d-%H%M%S")
 
 
-def _check_admin_upload_allowed(request: Request) -> None:
-    token = os.environ.get("ADMIN_TOKEN")
-    is_production = os.environ.get("ENV") == "production" or bool(os.environ.get("RAILWAY_ENVIRONMENT"))
+def _admin_secret() -> str | None:
+    return os.environ.get("ADMIN_PASSWORD") or os.environ.get("ADMIN_TOKEN")
 
-    if token:
+
+def _admin_cookie_value(secret: str) -> str:
+    return hashlib.sha256(f"rahul-admin:{secret}".encode("utf-8")).hexdigest()
+
+
+def _is_production() -> bool:
+    return os.environ.get("ENV") == "production" or bool(os.environ.get("RAILWAY_ENVIRONMENT"))
+
+
+def _check_admin_allowed(request: Request) -> None:
+    secret = _admin_secret()
+    is_production = _is_production()
+
+    if secret:
         supplied = request.headers.get("x-admin-token")
-        if supplied != token:
-            raise HTTPException(status_code=401, detail="invalid admin token")
-        return
+        cookie = getattr(request, "cookies", {}).get(ADMIN_COOKIE_NAME)
+        expected_cookie = _admin_cookie_value(secret)
+        if hmac.compare_digest(supplied or "", secret) or hmac.compare_digest(cookie or "", expected_cookie):
+            return
+        raise HTTPException(status_code=401, detail="admin authentication required")
 
     if is_production:
-        raise HTTPException(status_code=503, detail="ADMIN_TOKEN is required for admin uploads")
+        raise HTTPException(status_code=503, detail="ADMIN_PASSWORD or ADMIN_TOKEN is required for admin routes")
+
+    # Local development can use the admin surface without a configured secret.
+    return
+
+
+def _check_admin_upload_allowed(request: Request) -> None:
+    _check_admin_allowed(request)
+
+
+def _admin_auth_failure(request: Request) -> JSONResponse | None:
+    try:
+        _check_admin_allowed(request)
+    except HTTPException as exc:
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+    return None
+
+
+def _clean_public_text(value: str | None, max_chars: int = 1200) -> str | None:
+    if value is None:
+        return None
+    text = re.sub(r"\s+", " ", value).strip()
+    redactions = [
+        r"sk-[A-Za-z0-9_-]{12,}",
+        r"(?i)(OPENAI_API_KEY|RESEND_API_KEY|ADMIN_TOKEN|ADMIN_PASSWORD)\s*[=:]\s*\S+",
+        r"(?i)BEGIN [A-Z ]*PRIVATE KEY.*?END [A-Z ]*PRIVATE KEY",
+        r"(?i)private notes?",
+        r"(?i)notes/daily",
+        r"(?i)system prompts?",
+        r"(?i)developer prompts?",
+        r"(?i)internal prompts?",
+    ]
+    for pattern in redactions:
+        text = re.sub(pattern, "[redacted]", text)
+    return text[:max_chars]
+
+
+def _validate_public_email(email: str) -> str:
+    cleaned = email.strip()
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", cleaned):
+        raise HTTPException(status_code=422, detail="valid email is required")
+    return cleaned
+
+
+def _answer_status(payload: dict[str, object]) -> str:
+    answer = str(payload.get("answer") or "").lower()
+    evidence = payload.get("evidence")
+    evidence_count = len(evidence) if isinstance(evidence, list) else 0
+    if "cannot follow instructions" in answer:
+        return "refused"
+    if evidence_count == 0 or "evidence is missing" in answer or "does not show" in answer:
+        return "insufficient_evidence"
+    return "answered"
+
+
+def _notify_contact_request(record: dict[str, object]) -> str:
+    if os.environ.get("CONTACT_NOTIFY_PROVIDER") != "resend":
+        return "skipped"
+    api_key = os.environ.get("RESEND_API_KEY")
+    notify_to = os.environ.get("CONTACT_NOTIFY_TO")
+    notify_from = os.environ.get("CONTACT_NOTIFY_FROM")
+    if not api_key or not notify_to or not notify_from:
+        return "skipped"
+
+    payload = json.dumps(
+        {
+            "from": notify_from,
+            "to": [notify_to],
+            "subject": "New public portfolio contact request",
+            "text": (
+                f"Name: {record.get('name') or ''}\n"
+                f"Email: {record.get('email') or ''}\n"
+                f"Phone: {record.get('phone') or ''}\n"
+                f"Context: {record.get('context_type') or ''}\n"
+                f"Source: {record.get('source') or ''}\n\n"
+                f"{record.get('message') or ''}"
+            ),
+        }
+    ).encode("utf-8")
+    req = urlrequest.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlrequest.urlopen(req, timeout=5) as response:
+            return "sent" if 200 <= response.status < 300 else "failed"
+    except (OSError, URLError):
+        return "failed"
+
+
+def _contact_response(record: dict[str, object]) -> dict[str, object]:
+    return {"success": True, "id": record["id"]}
+
+
+def _admin_payload() -> dict[str, object]:
+    return {
+        "contact_requests": db.list_contact_requests(),
+        "public_question_logs": db.list_public_question_logs(),
+    }
 
 
 def _decode_part_text(part) -> str:
@@ -366,19 +502,72 @@ def public_ask() -> FileResponse:
     return FileResponse(PUBLIC_UI_DIR / "index.html")
 
 
+@app.get("/thinking-window")
+def public_thinking_window() -> FileResponse:
+    return FileResponse(PUBLIC_UI_DIR / "index.html")
+
+
 @app.get("/contact")
 def public_contact() -> FileResponse:
     return FileResponse(PUBLIC_UI_DIR / "index.html")
 
 
 @app.get("/admin")
-def admin() -> FileResponse:
+def admin(request: Request):
+    auth_failure = _admin_auth_failure(request)
+    if auth_failure:
+        return auth_failure
+    return FileResponse(ADMIN_UI_DIR / "index.html")
+
+
+@app.get("/admin/login")
+def admin_login_page() -> FileResponse:
     return FileResponse(ADMIN_UI_DIR / "index.html")
 
 
 @app.get("/admin/resumes")
-def admin_resumes() -> FileResponse:
+def admin_resumes(request: Request):
+    auth_failure = _admin_auth_failure(request)
+    if auth_failure:
+        return auth_failure
     return FileResponse(ADMIN_UI_DIR / "index.html")
+
+
+@app.post("/admin/login")
+def admin_login(payload: AdminLoginRequest) -> JSONResponse:
+    secret = _admin_secret()
+    if not secret:
+        if _is_production():
+            raise HTTPException(status_code=503, detail="admin authentication is not configured")
+        secret = payload.password
+    elif not hmac.compare_digest(payload.password, secret):
+        raise HTTPException(status_code=401, detail="invalid admin credentials")
+
+    response = JSONResponse({"success": True})
+    response.set_cookie(
+        ADMIN_COOKIE_NAME,
+        _admin_cookie_value(secret),
+        max_age=ADMIN_COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        secure=_is_production(),
+    )
+    return response
+
+
+@app.post("/admin/logout")
+def admin_logout() -> JSONResponse:
+    response = JSONResponse({"success": True})
+    response.delete_cookie(ADMIN_COOKIE_NAME)
+    return response
+
+
+@app.get("/admin/dashboard-data")
+def admin_dashboard_data(request: Request):
+    auth_failure = _admin_auth_failure(request)
+    if auth_failure:
+        return auth_failure
+    return _admin_payload()
 
 
 @app.get("/console")
@@ -388,7 +577,43 @@ def console() -> FileResponse:
 
 @app.post("/ask-rahul")
 def ask_rahul_endpoint(request: AskRahulRequest) -> dict[str, object]:
-    return ask_rahul(request.question.strip())
+    question = _clean_public_text(request.question, max_chars=1200) or ""
+    result = ask_rahul(question.strip())
+    evidence = result.get("evidence")
+    evidence_count = len(evidence) if isinstance(evidence, list) else 0
+    source_page = request.source_page if request.source_page in {"portfolio", "thinking_window"} else "portfolio"
+    answer_status = _answer_status(result)
+    logged_question = "[redacted unsafe public question]" if answer_status == "refused" else question
+    db.add_public_question_log(
+        question=logged_question,
+        answer_status=answer_status,
+        evidence_count=evidence_count,
+        source_page=source_page,
+        contact_email=_clean_public_text(request.contact_email, max_chars=254),
+        contact_phone=_clean_public_text(request.contact_phone, max_chars=60),
+    )
+    return result
+
+
+@app.post("/contact-request")
+def contact_request(payload: ContactRequest) -> dict[str, object]:
+    email = _validate_public_email(payload.email)
+    message = _clean_public_text(payload.message, max_chars=4000)
+    if not message:
+        raise HTTPException(status_code=422, detail="message is required")
+    record = db.add_contact_request(
+        name=_clean_public_text(payload.name, max_chars=160),
+        email=email,
+        phone=_clean_public_text(payload.phone, max_chars=60),
+        context_type=payload.context_type,
+        message=message,
+        source=payload.source,
+        notification_status="pending",
+    )
+    notification_status = _notify_contact_request(record)
+    db.update_contact_notification_status(str(record["id"]), notification_status)
+    record["notification_status"] = notification_status
+    return _contact_response(record)
 
 
 @app.post("/admin/resume-upload")
@@ -405,6 +630,22 @@ async def admin_resume_upload(request: Request) -> dict[str, object]:
         "warnings": result["warnings"],
         "character_count": result["character_count"],
     }
+
+
+@app.get("/admin/contact-requests")
+def admin_contact_requests(request: Request):
+    auth_failure = _admin_auth_failure(request)
+    if auth_failure:
+        return auth_failure
+    return {"contact_requests": db.list_contact_requests()}
+
+
+@app.get("/admin/public-question-logs")
+def admin_public_question_logs(request: Request):
+    auth_failure = _admin_auth_failure(request)
+    if auth_failure:
+        return auth_failure
+    return {"public_question_logs": db.list_public_question_logs()}
 
 
 @app.get("/zone-status")
