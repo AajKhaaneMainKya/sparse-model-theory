@@ -54,6 +54,7 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertIn("https://aksharthewriter.vercel.app/offline", combined)
         self.assertIn("https://sahayakhq.co/", combined)
         self.assertIn("rahul.jpg", combined)
+        self.assertIn("/assets/rahul.jpg", combined)
         self.assertIn("localStorage", combined)
         self.assertIn("prefers-color-scheme", combined)
         self.assertIn("data-ask-output", combined)
@@ -65,6 +66,8 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertNotIn("ADMIN_TOKEN", combined)
         self.assertNotIn("notes/daily", combined)
         self.assertNotIn("OPENAI_API_KEY", combined)
+        self.assertNotIn("Rahul.JPG", combined)
+        self.assertNotIn("rahul.jpg.README.md\"", combined)
         self.assertNotIn("interview question", combined.lower())
         self.assertNotIn("caveat", combined.lower())
         self.assertNotIn("How is Rahul doing at his present job?", combined)
@@ -105,8 +108,10 @@ class VercelPublicStaticTests(unittest.TestCase):
     def test_photo_references_existing_asset_and_has_fallback(self):
         html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
 
-        self.assertIn('src="assets/rahul.jpg"', html)
+        self.assertIn('src="/assets/rahul.jpg"', html)
         self.assertTrue((PUBLIC_DIR / "assets" / "rahul.jpg").exists())
+        self.assertNotIn("Rahul.JPG", html)
+        self.assertNotIn("rahul.jpg.README.md", html)
         self.assertIn("data-portrait", html)
         self.assertIn("portrait-fallback", html)
         self.assertIn("portrait-missing", (PUBLIC_DIR / "app.js").read_text(encoding="utf-8"))
