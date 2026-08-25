@@ -37,7 +37,9 @@ function renderRows(container, rows, emptyText, renderRow) {
 
 function textLine(label, value) {
   const line = document.createElement("p");
-  line.innerHTML = `<strong>${label}</strong> ${value || "—"}`;
+  const strong = document.createElement("strong");
+  strong.textContent = label;
+  line.append(strong, ` ${value || "—"}`);
   return line;
 }
 
@@ -50,6 +52,7 @@ async function loadDashboard() {
       textLine("Phone", row.phone),
       textLine("Context", row.context_type),
       textLine("Notification", row.notification_status),
+      textLine("Notification error", row.notification_error),
       textLine("Message", row.message),
     );
     return item;

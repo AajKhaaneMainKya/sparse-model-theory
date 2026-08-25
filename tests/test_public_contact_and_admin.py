@@ -1,7 +1,10 @@
 import os
+from io import BytesIO
+import json
 import tempfile
 import unittest
 from unittest import mock
+from urllib.error import HTTPError
 
 _TMPDIR = tempfile.mkdtemp()
 os.environ["SMT_DB_PATH"] = os.path.join(_TMPDIR, "test_public_contact.db")
@@ -51,6 +54,8 @@ class PublicContactAndAdminTests(unittest.TestCase):
         self.assertEqual(stored["email"], "founder@example.com")
         self.assertEqual(stored["phone"], "+91 99999 99999")
         self.assertEqual(stored["notification_status"], "skipped")
+        self.assertIn("CONTACT_NOTIFY_PROVIDER", stored["notification_error"])
+        self.assertNotIn("notification_error", body)
 
     def test_contact_request_requires_email(self):
         with self.assertRaises(ValidationError):
@@ -83,7 +88,7 @@ class PublicContactAndAdminTests(unittest.TestCase):
         db.init_db()
 
         class FakeResponse:
-            status = 200
+            status = 201
 
             def __enter__(self):
                 return self
@@ -98,9 +103,111 @@ class PublicContactAndAdminTests(unittest.TestCase):
 
         self.assertTrue(body["success"])
         send.assert_called_once()
+        request = send.call_args.args[0]
+        self.assertEqual(request.full_url, "https://api.resend.com/emails")
+        self.assertEqual(request.get_method(), "POST")
+        self.assertEqual(request.headers["Authorization"], "Bearer test-key")
+        self.assertEqual(request.headers["Content-type"], "application/json")
+        resend_body = json.loads(request.data.decode("utf-8"))
+        self.assertEqual(set(resend_body), {"from", "to", "subject", "text"})
+        self.assertEqual(resend_body["from"], "from@example.com")
+        self.assertEqual(resend_body["to"], ["to@example.com"])
+        self.assertIn("New public portfolio contact request", resend_body["subject"])
         [stored] = db.list_contact_requests()
         self.assertEqual(stored["notification_status"], "sent")
+        self.assertIsNone(stored["notification_error"])
         self.assertNotIn("test-key", str(body))
+
+    def test_contact_notification_200_response_marks_sent(self):
+        self.env.stop()
+        self.env = mock.patch.dict(
+            os.environ,
+            {
+                "SMT_DB_PATH": os.path.join(self.tmp.name, "notify-200.db"),
+                "CONTACT_NOTIFY_PROVIDER": "resend",
+                "RESEND_API_KEY": "test-key",
+                "CONTACT_NOTIFY_TO": "to@example.com",
+                "CONTACT_NOTIFY_FROM": "from@example.com",
+            },
+            clear=True,
+        )
+        self.env.start()
+        db._initialized_paths.clear()
+        db.init_db()
+
+        class FakeResponse:
+            status = 200
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        with mock.patch.object(server.urlrequest, "urlopen", return_value=FakeResponse()):
+            server.contact_request(server.ContactRequest(email="a@example.com", message="hello"))
+
+        [stored] = db.list_contact_requests()
+        self.assertEqual(stored["notification_status"], "sent")
+        self.assertIsNone(stored["notification_error"])
+
+    def test_failed_resend_response_stores_sanitized_error(self):
+        self.env.stop()
+        self.env = mock.patch.dict(
+            os.environ,
+            {
+                "SMT_DB_PATH": os.path.join(self.tmp.name, "notify-http-fail.db"),
+                "CONTACT_NOTIFY_PROVIDER": "resend",
+                "RESEND_API_KEY": "test-key-secret",
+                "CONTACT_NOTIFY_TO": "to@example.com",
+                "CONTACT_NOTIFY_FROM": "from@example.com",
+            },
+            clear=True,
+        )
+        self.env.start()
+        db._initialized_paths.clear()
+        db.init_db()
+
+        error = HTTPError(
+            "https://api.resend.com/emails",
+            403,
+            "Forbidden",
+            {},
+            BytesIO(b'{"message":"The from domain is not verified","token":"test-key-secret"}'),
+        )
+        with mock.patch.object(server.urlrequest, "urlopen", side_effect=error):
+            body = server.contact_request(server.ContactRequest(email="a@example.com", message="hello"))
+
+        [stored] = db.list_contact_requests()
+        self.assertTrue(body["success"])
+        self.assertEqual(stored["notification_status"], "failed")
+        self.assertIn("http_status=403", stored["notification_error"])
+        self.assertIn("from domain is not verified", stored["notification_error"])
+        self.assertNotIn("test-key-secret", stored["notification_error"])
+        self.assertNotIn("notification_error", body)
+
+    def test_missing_resend_env_stores_useful_skipped_reason(self):
+        self.env.stop()
+        self.env = mock.patch.dict(
+            os.environ,
+            {
+                "SMT_DB_PATH": os.path.join(self.tmp.name, "notify-missing-env.db"),
+                "CONTACT_NOTIFY_PROVIDER": "resend",
+                "RESEND_API_KEY": "test-key",
+            },
+            clear=True,
+        )
+        self.env.start()
+        db._initialized_paths.clear()
+        db.init_db()
+
+        server.contact_request(server.ContactRequest(email="a@example.com", message="hello"))
+
+        [stored] = db.list_contact_requests()
+        self.assertEqual(stored["notification_status"], "skipped")
+        self.assertIn("CONTACT_NOTIFY_TO", stored["notification_error"])
+        self.assertIn("CONTACT_NOTIFY_FROM", stored["notification_error"])
+        self.assertNotIn("test-key", stored["notification_error"])
 
     def test_contact_request_succeeds_when_notification_fails(self):
         self.env.stop()
@@ -127,6 +234,7 @@ class PublicContactAndAdminTests(unittest.TestCase):
         self.assertTrue(body["success"])
         [stored] = db.list_contact_requests()
         self.assertEqual(stored["notification_status"], "failed")
+        self.assertIn("network down", stored["notification_error"])
 
     def test_public_question_logging_persists_from_ask_rahul(self):
         with mock.patch("api.server.ask_rahul", return_value={"answer": "No evidence.", "evidence": []}):
@@ -187,6 +295,26 @@ class PublicContactAndAdminTests(unittest.TestCase):
         dashboard = server.admin_dashboard_data(authenticated)
         self.assertIn("contact_requests", dashboard)
         self.assertIn("public_question_logs", dashboard)
+
+    def test_authenticated_admin_response_includes_notification_error(self):
+        record = db.add_contact_request(
+            name=None,
+            email="admin@example.com",
+            phone=None,
+            context_type="other",
+            message="Stored diagnostic",
+            source="contact",
+            notification_status="failed",
+            notification_error="resend notification failed; http_status=403; message=domain rejected",
+        )
+        authenticated = FakeAdminRequest(headers={"x-admin-token": "local-token"})
+        with mock.patch.dict(os.environ, {"ADMIN_TOKEN": "local-token"}, clear=False):
+            response = server.admin_contact_requests(authenticated)
+
+        [stored] = response["contact_requests"]
+        self.assertEqual(stored["id"], record["id"])
+        self.assertEqual(stored["notification_status"], "failed")
+        self.assertIn("domain rejected", stored["notification_error"])
 
 
 if __name__ == "__main__":

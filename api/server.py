@@ -16,7 +16,7 @@ import re
 import time
 from typing import Literal
 from urllib import request as urlrequest
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -203,6 +203,15 @@ class ResumeUpload:
     label: str | None
 
 
+@dataclass(frozen=True)
+class NotificationResult:
+    status: Literal["sent", "failed", "skipped"]
+    error: str | None = None
+    provider: str = "none"
+    http_status: int | None = None
+    missing_env: tuple[str, ...] = ()
+
+
 def sanitize_resume_label(label: str) -> str:
     cleaned = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
     return cleaned
@@ -297,14 +306,85 @@ def _answer_status(payload: dict[str, object]) -> str:
     return "answered"
 
 
-def _notify_contact_request(record: dict[str, object]) -> str:
-    if os.environ.get("CONTACT_NOTIFY_PROVIDER") != "resend":
-        return "skipped"
+def _sanitize_notification_error(value: str | None, max_chars: int = 900) -> str | None:
+    if not value:
+        return None
+    text = _clean_public_text(value, max_chars=max_chars) or ""
+    for env_name in ("RESEND_API_KEY", "ADMIN_TOKEN", "ADMIN_PASSWORD", "OPENAI_API_KEY"):
+        secret_value = os.environ.get(env_name)
+        if secret_value:
+            text = text.replace(secret_value, "[redacted]")
+    text = re.sub(r"Bearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [redacted]", text, flags=re.IGNORECASE)
+    text = re.sub(r"(?i)(authorization|api[-_ ]?key|token|secret|password)\s*[:=]\s*\S+", r"\1=[redacted]", text)
+    text = re.sub(r'(?i)"(authorization|api[-_ ]?key|token|secret|password)"\s*:\s*"[^"]*"', r'"\1":"[redacted]"', text)
+    return text[:max_chars] or None
+
+
+def _read_error_body(error: HTTPError) -> str | None:
+    try:
+        payload = error.read()
+    except OSError:
+        return None
+    if not payload:
+        return None
+    return payload.decode("utf-8", errors="replace")
+
+
+def _resend_failure_message(status: int | None = None, provider_message: str | None = None) -> str:
+    parts = ["resend notification failed"]
+    if status is not None:
+        parts.append(f"http_status={status}")
+    sanitized = _sanitize_notification_error(provider_message)
+    if sanitized:
+        parts.append(f"message={sanitized}")
+    return "; ".join(parts)
+
+
+def _log_notification_result(result: NotificationResult) -> None:
+    if result.status == "sent":
+        return
+    logger.warning(
+        "contact notification %s provider=%s missing_env=%s http_status=%s error=%s",
+        result.status,
+        result.provider,
+        ",".join(result.missing_env),
+        result.http_status,
+        result.error,
+    )
+
+
+def _notify_contact_request(record: dict[str, object]) -> NotificationResult:
+    provider = os.environ.get("CONTACT_NOTIFY_PROVIDER", "").strip().lower()
+    if provider != "resend":
+        result = NotificationResult(
+            status="skipped",
+            error="CONTACT_NOTIFY_PROVIDER is not set to resend",
+            provider=provider or "none",
+        )
+        _log_notification_result(result)
+        return result
+
     api_key = os.environ.get("RESEND_API_KEY")
     notify_to = os.environ.get("CONTACT_NOTIFY_TO")
     notify_from = os.environ.get("CONTACT_NOTIFY_FROM")
-    if not api_key or not notify_to or not notify_from:
-        return "skipped"
+    missing = tuple(
+        name
+        for name, value in {
+            "RESEND_API_KEY": api_key,
+            "CONTACT_NOTIFY_TO": notify_to,
+            "CONTACT_NOTIFY_FROM": notify_from,
+        }.items()
+        if not value
+    )
+    if missing:
+        result = NotificationResult(
+            status="skipped",
+            error=f"missing required notification env vars: {', '.join(missing)}",
+            provider="resend",
+            missing_env=missing,
+        )
+        _log_notification_result(result)
+        return result
 
     payload = json.dumps(
         {
@@ -332,9 +412,34 @@ def _notify_contact_request(record: dict[str, object]) -> str:
     )
     try:
         with urlrequest.urlopen(req, timeout=5) as response:
-            return "sent" if 200 <= response.status < 300 else "failed"
-    except (OSError, URLError):
-        return "failed"
+            if response.status in {200, 201} or 200 <= response.status < 300:
+                return NotificationResult(status="sent", provider="resend", http_status=response.status)
+            result = NotificationResult(
+                status="failed",
+                error=_resend_failure_message(response.status),
+                provider="resend",
+                http_status=response.status,
+            )
+            _log_notification_result(result)
+            return result
+    except HTTPError as error:
+        provider_message = _read_error_body(error) or str(error)
+        result = NotificationResult(
+            status="failed",
+            error=_resend_failure_message(error.code, provider_message),
+            provider="resend",
+            http_status=error.code,
+        )
+        _log_notification_result(result)
+        return result
+    except (OSError, URLError) as error:
+        result = NotificationResult(
+            status="failed",
+            error=_sanitize_notification_error(str(error)) or "network error while contacting Resend",
+            provider="resend",
+        )
+        _log_notification_result(result)
+        return result
 
 
 def _contact_response(record: dict[str, object]) -> dict[str, object]:
@@ -610,9 +715,10 @@ def contact_request(payload: ContactRequest) -> dict[str, object]:
         source=payload.source,
         notification_status="pending",
     )
-    notification_status = _notify_contact_request(record)
-    db.update_contact_notification_status(str(record["id"]), notification_status)
-    record["notification_status"] = notification_status
+    notification = _notify_contact_request(record)
+    db.update_contact_notification_status(str(record["id"]), notification.status, notification.error)
+    record["notification_status"] = notification.status
+    record["notification_error"] = notification.error
     return _contact_response(record)
 
 

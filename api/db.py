@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS contact_requests (
     message             TEXT NOT NULL,
     source              TEXT NOT NULL,
     notification_status TEXT NOT NULL,
+    notification_error  TEXT,
     created_at          TEXT NOT NULL
 );
 
@@ -86,6 +87,10 @@ CREATE INDEX IF NOT EXISTS idx_public_question_logs_created
 # (never drops data). Keep in sync with the CREATE TABLE above.
 _EXPECTED_SESSION_COLUMNS: dict[str, str] = {
     "summary": "TEXT",
+}
+
+_EXPECTED_CONTACT_REQUEST_COLUMNS: dict[str, str] = {
+    "notification_error": "TEXT",
 }
 
 _initialized_paths: set[str] = set()
@@ -116,6 +121,7 @@ def _connect() -> Iterator[sqlite3.Connection]:
     if key not in _initialized_paths:
         conn.executescript(SCHEMA)
         _ensure_session_columns(conn)
+        _ensure_contact_request_columns(conn)
         conn.commit()
         _initialized_paths.add(key)
     try:
@@ -143,6 +149,16 @@ def _ensure_session_columns(conn: sqlite3.Connection) -> list[str]:
     return added
 
 
+def _ensure_contact_request_columns(conn: sqlite3.Connection) -> list[str]:
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(contact_requests)")}
+    added: list[str] = []
+    for column, decl in _EXPECTED_CONTACT_REQUEST_COLUMNS.items():
+        if column not in existing:
+            conn.execute(f"ALTER TABLE contact_requests ADD COLUMN {column} {decl}")
+            added.append(column)
+    return added
+
+
 def init_db() -> None:
     """Ensure the schema exists for the active database path."""
     with _connect():
@@ -158,6 +174,7 @@ def add_contact_request(
     message: str,
     source: str,
     notification_status: str = "pending",
+    notification_error: str | None = None,
 ) -> dict[str, str | None]:
     request_id = str(uuid.uuid4())
     now = _now()
@@ -166,8 +183,8 @@ def add_contact_request(
             """
             INSERT INTO contact_requests (
                 id, name, email, phone, context_type, message, source,
-                notification_status, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                notification_status, notification_error, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 request_id,
@@ -178,6 +195,7 @@ def add_contact_request(
                 message,
                 source,
                 notification_status,
+                notification_error,
                 now,
             ),
         )
@@ -190,15 +208,16 @@ def add_contact_request(
         "message": message,
         "source": source,
         "notification_status": notification_status,
+        "notification_error": notification_error,
         "created_at": now,
     }
 
 
-def update_contact_notification_status(request_id: str, status: str) -> None:
+def update_contact_notification_status(request_id: str, status: str, error: str | None = None) -> None:
     with _connect() as conn:
         conn.execute(
-            "UPDATE contact_requests SET notification_status = ? WHERE id = ?",
-            (status, request_id),
+            "UPDATE contact_requests SET notification_status = ?, notification_error = ? WHERE id = ?",
+            (status, error, request_id),
         )
 
 
@@ -207,7 +226,7 @@ def list_contact_requests(limit: int = 100) -> list[dict[str, object]]:
         rows = conn.execute(
             """
             SELECT id, name, email, phone, context_type, message, source,
-                   notification_status, created_at
+                   notification_status, notification_error, created_at
             FROM contact_requests
             ORDER BY created_at DESC, id DESC
             LIMIT ?
