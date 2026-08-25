@@ -5,9 +5,11 @@ from datetime import date, datetime
 import difflib
 from email.parser import BytesParser
 from email.policy import default
+from io import BytesIO
 import logging
 import os
 from pathlib import Path
+import re
 import time
 from typing import Literal
 
@@ -19,9 +21,10 @@ from pydantic import BaseModel, Field
 
 from engine.gate import route_note
 from engine.note import Note, NoteValidationError, load_note, load_notes, parse_frontmatter
-from engine.retrieval import MatchResult, MatchTier, precedent_matches
 
 from . import db
+from . import public_portfolio
+from .public_portfolio import AskRahulRequest, ask_rahul
 from .zone import (
     DAILY_DIR,
     DEFAULT_OLLAMA_MODEL,
@@ -39,6 +42,8 @@ ROOT = Path(__file__).resolve().parents[1]
 NOTES_DIR = ROOT / "notes"
 EXAMPLES_DIR = ROOT / "examples"
 UI_DIR = ROOT / "ui"
+PUBLIC_UI_DIR = ROOT / "public_ui"
+ADMIN_UI_DIR = ROOT / "admin_ui"
 
 
 app = FastAPI(title="Sparse Model Theory API")
@@ -51,9 +56,11 @@ app.add_middleware(
     allow_origin_regex=r"^http://localhost(:[0-9]+)?$",
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["content-type"],
+    allow_headers=["content-type", "x-admin-token"],
 )
 app.mount("/static", StaticFiles(directory=UI_DIR), name="static")
+app.mount("/portfolio-static", StaticFiles(directory=PUBLIC_UI_DIR), name="portfolio-static")
+app.mount("/admin-static", StaticFiles(directory=ADMIN_UI_DIR), name="admin-static")
 
 
 @dataclass(frozen=True)
@@ -82,6 +89,14 @@ class SecondBrainRequest(BaseModel):
     # Opt-in, default False. When true, the most recent prior session summaries in
     # this thread are compressed and injected once into the initial pass.
     include_thread_context: bool = False
+
+
+class OpenClawAgentRequest(BaseModel):
+    message: str = Field(min_length=1)
+    mode: Literal["economy", "balanced", "deep"] = "balanced"
+    return_full: bool = False
+    allow_capture: bool = True
+    skip_skills: list[str] = []
 
 
 class ThreadCreateRequest(BaseModel):
@@ -161,9 +176,216 @@ async def uploaded_markdown_text(request: Request) -> str:
     return body.decode(charset)
 
 
+@dataclass(frozen=True)
+class ResumeUpload:
+    filename: str
+    text: str
+    label: str | None
+
+
+def sanitize_resume_label(label: str) -> str:
+    cleaned = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
+    return cleaned
+
+
+def default_resume_label(now: datetime | None = None) -> str:
+    timestamp = (now or datetime.now()).strftime("%Y%m%d-%H%M%S")
+    return f"resume-{timestamp}"
+
+
+def _timestamp_slug(now: datetime | None = None) -> str:
+    return (now or datetime.now()).strftime("%Y%m%d-%H%M%S")
+
+
+def _check_admin_upload_allowed(request: Request) -> None:
+    token = os.environ.get("ADMIN_TOKEN")
+    is_production = os.environ.get("ENV") == "production" or bool(os.environ.get("RAILWAY_ENVIRONMENT"))
+
+    if token:
+        supplied = request.headers.get("x-admin-token")
+        if supplied != token:
+            raise HTTPException(status_code=401, detail="invalid admin token")
+        return
+
+    if is_production:
+        raise HTTPException(status_code=503, detail="ADMIN_TOKEN is required for admin uploads")
+
+
+def _decode_part_text(part) -> str:
+    payload = part.get_payload(decode=True) or b""
+    charset = part.get_content_charset() or "utf-8"
+    return payload.decode(charset)
+
+
+def extract_pdf_text(payload: bytes) -> str:
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:
+        raise HTTPException(status_code=500, detail="PDF extraction requires pypdf") from exc
+
+    reader = PdfReader(BytesIO(payload))
+    pages = [page.extract_text() or "" for page in reader.pages]
+    return "\n\n".join(page.strip() for page in pages if page.strip())
+
+
+def extract_docx_text(payload: bytes) -> str:
+    try:
+        from docx import Document
+    except ImportError as exc:
+        raise HTTPException(status_code=500, detail="DOCX extraction requires python-docx") from exc
+
+    document = Document(BytesIO(payload))
+    paragraphs = [paragraph.text.strip() for paragraph in document.paragraphs if paragraph.text.strip()]
+    return "\n\n".join(paragraphs)
+
+
+def extract_resume_text(filename: str, payload: bytes, content_type: str | None = None) -> str:
+    suffix = Path(filename).suffix.lower()
+    if suffix in {".txt", ".md"}:
+        return payload.decode("utf-8").strip()
+    if suffix == ".pdf":
+        return extract_pdf_text(payload).strip()
+    if suffix == ".docx":
+        return extract_docx_text(payload).strip()
+    raise HTTPException(status_code=400, detail="only .txt, .md, .pdf, and .docx resume uploads are supported")
+
+
+async def uploaded_resume(request: Request) -> ResumeUpload:
+    body = await request.body()
+    content_type = request.headers.get("content-type", "")
+    if not content_type.startswith("multipart/form-data"):
+        raise HTTPException(status_code=400, detail="resume upload must be multipart/form-data")
+
+    message = BytesParser(policy=default).parsebytes(
+        b"Content-Type: " + content_type.encode("utf-8") + b"\r\n\r\n" + body
+    )
+
+    filename: str | None = None
+    text: str | None = None
+    label: str | None = None
+
+    for part in message.iter_parts():
+        if part.get_content_disposition() != "form-data":
+            continue
+
+        name = part.get_param("name", header="content-disposition")
+        part_filename = part.get_filename()
+        if part_filename:
+            suffix = Path(part_filename).suffix.lower()
+            if suffix not in {".txt", ".md", ".pdf", ".docx"}:
+                raise HTTPException(
+                    status_code=400,
+                    detail="only .txt, .md, .pdf, and .docx resume uploads are supported",
+                )
+            filename = part_filename
+            payload = part.get_payload(decode=True) or b""
+            text = extract_resume_text(part_filename, payload, part.get_content_type())
+        elif name == "label":
+            raw_label = _decode_part_text(part).strip()
+            label = raw_label or None
+
+    if filename is None or text is None:
+        raise HTTPException(status_code=400, detail="multipart upload must include a resume file")
+    if not text:
+        raise HTTPException(status_code=400, detail="resume file is empty")
+
+    return ResumeUpload(filename=filename, text=text, label=label)
+
+
+def _unique_resume_path(resumes_dir: Path, label: str, now: datetime | None = None) -> tuple[str, Path]:
+    path = resumes_dir / f"{label}.md"
+    if not path.exists():
+        return label, path
+
+    stamped = f"{label}-{_timestamp_slug(now)}"
+    path = resumes_dir / f"{stamped}.md"
+    if not path.exists():
+        return stamped, path
+
+    counter = 2
+    while True:
+        candidate = resumes_dir / f"{stamped}-{counter}.md"
+        if not candidate.exists():
+            return f"{stamped}-{counter}", candidate
+        counter += 1
+
+
+def save_resume_to_public_corpus(upload: ResumeUpload, now: datetime | None = None) -> dict[str, object]:
+    resolved_now = now or datetime.now()
+    timestamp = resolved_now.isoformat(timespec="seconds")
+    raw_label = upload.label or Path(upload.filename).stem
+    label = sanitize_resume_label(raw_label) or default_resume_label(resolved_now)
+    resumes_dir = public_portfolio.PUBLIC_CORPUS_DIR / "resumes"
+    resumes_dir.mkdir(parents=True, exist_ok=True)
+    final_label, path = _unique_resume_path(resumes_dir, label, resolved_now)
+    content = (
+        f"# Rahul Shiv Shankar — Resume: {final_label}\n\n"
+        "Source: uploaded resume\n"
+        f"Original filename: {upload.filename}\n"
+        f"Updated: {timestamp}\n\n"
+        f"{public_portfolio.normalize_public_text(upload.text)}\n"
+    )
+    path.write_text(content, encoding="utf-8")
+    return {
+        "success": True,
+        "label": final_label,
+        "source": str(path.relative_to(public_portfolio.PUBLIC_CORPUS_DIR)),
+        "path": str(path),
+        "character_count": len(upload.text.strip()),
+    }
+
+
 @app.get("/")
+def public_home() -> FileResponse:
+    return FileResponse(PUBLIC_UI_DIR / "index.html")
+
+
+@app.get("/projects")
+def public_projects() -> FileResponse:
+    return FileResponse(PUBLIC_UI_DIR / "index.html")
+
+
+@app.get("/ask")
+def public_ask() -> FileResponse:
+    return FileResponse(PUBLIC_UI_DIR / "index.html")
+
+
+@app.get("/contact")
+def public_contact() -> FileResponse:
+    return FileResponse(PUBLIC_UI_DIR / "index.html")
+
+
+@app.get("/admin")
+def admin() -> FileResponse:
+    return FileResponse(ADMIN_UI_DIR / "index.html")
+
+
+@app.get("/admin/resumes")
+def admin_resumes() -> FileResponse:
+    return FileResponse(ADMIN_UI_DIR / "index.html")
+
+
+@app.get("/console")
 def console() -> FileResponse:
     return FileResponse(UI_DIR / "index.html")
+
+
+@app.post("/ask-rahul")
+def ask_rahul_endpoint(request: AskRahulRequest) -> dict[str, object]:
+    return ask_rahul(request.question.strip())
+
+
+@app.post("/admin/resume-upload")
+async def admin_resume_upload(request: Request) -> dict[str, object]:
+    _check_admin_upload_allowed(request)
+    upload = await uploaded_resume(request)
+    result = save_resume_to_public_corpus(upload)
+    return {
+        "success": True,
+        "label": result["label"],
+        "source": result["source"],
+        "character_count": result["character_count"],
+    }
 
 
 @app.get("/zone-status")
@@ -244,6 +466,116 @@ def daily_capture(request: DailyCaptureRequest) -> dict[str, object]:
         "success": True,
         "path": str(path),
         "date": today,
+    }
+
+
+def _compact_chat_reply(text: str, max_chars: int = 1400) -> str:
+    cleaned = " ".join(text.strip().split())
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return cleaned[: max_chars - 1].rstrip() + "…"
+
+
+def _analysis_reply(payload: dict[str, object]) -> str:
+    synthesis = payload.get("synthesis")
+    if isinstance(synthesis, dict):
+        output = synthesis.get("output")
+        if isinstance(output, str) and output.strip():
+            return _compact_chat_reply(output)
+
+    scope_output: str | None = None
+    results = payload.get("results")
+    if isinstance(results, list):
+        first_output: str | None = None
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+            output = item.get("output")
+            if not isinstance(output, str) or not output.strip():
+                continue
+            if first_output is None:
+                first_output = output
+            if item.get("skill") == "scope_check":
+                scope_output = output
+                break
+        reply_parts = [part for part in (scope_output, first_output) if part]
+        if reply_parts:
+            return _compact_chat_reply("\n\n".join(reply_parts))
+
+    return "Analysis completed, but no compact reply was available."
+
+
+@app.post("/openclaw/agent")
+def openclaw_agent(request: OpenClawAgentRequest) -> dict[str, object]:
+    started_at = time.perf_counter()
+    raw_message = request.message.strip()
+
+    if not raw_message:
+        return {
+            "kind": "error",
+            "reply": "Message is empty.",
+            "full_result": None,
+            "latency_ms": round((time.perf_counter() - started_at) * 1000, 1),
+        }
+
+    # OpenClaw demo boundary:
+    # - no shell/tool execution, web access, outbound messaging, or arbitrary file reads
+    # - no schema-note writes and no anchor_type inference
+    # - the only write path exposed here is existing daily capture persistence
+    if raw_message.startswith("/capture "):
+        if not request.allow_capture:
+            return {
+                "kind": "error",
+                "reply": "Capture is disabled for this request.",
+                "full_result": None,
+                "latency_ms": round((time.perf_counter() - started_at) * 1000, 1),
+            }
+        capture_text = raw_message.removeprefix("/capture ").strip()
+        if not capture_text:
+            return {
+                "kind": "error",
+                "reply": "Capture text is empty.",
+                "full_result": None,
+                "latency_ms": round((time.perf_counter() - started_at) * 1000, 1),
+            }
+        result = daily_capture(DailyCaptureRequest(text=capture_text))
+        return {
+            "kind": "capture",
+            "reply": f"Captured for {result['date']}.",
+            "full_result": result if request.return_full else None,
+            "latency_ms": round((time.perf_counter() - started_at) * 1000, 1),
+        }
+
+    if raw_message.startswith("/think "):
+        input_text = raw_message.removeprefix("/think ").strip()
+    elif raw_message.startswith("/followup "):
+        rest = raw_message.removeprefix("/followup ").strip()
+        input_text = f"Follow-up question: {rest}" if rest else ""
+    else:
+        input_text = raw_message
+
+    if not input_text:
+        return {
+            "kind": "error",
+            "reply": "Analysis text is empty.",
+            "full_result": None,
+            "latency_ms": round((time.perf_counter() - started_at) * 1000, 1),
+        }
+
+    daily_capture_text = get_latest_daily_capture()
+    payload = agentic_second_brain_analysis(
+        input_text,
+        daily_capture=daily_capture_text,
+        skip_skills=request.skip_skills,
+        mode=request.mode,
+    )
+    payload["latency_ms"] = round((time.perf_counter() - started_at) * 1000, 1)
+
+    return {
+        "kind": "analysis",
+        "reply": _analysis_reply(payload),
+        "full_result": payload if request.return_full else None,
+        "latency_ms": payload["latency_ms"],
     }
 
 
@@ -483,6 +815,8 @@ def second_brain(request: SecondBrainRequest) -> dict[str, object]:
 
 @app.post("/query")
 def query(request: QueryRequest) -> dict[str, object]:
+    from engine.retrieval import MatchTier, precedent_matches
+
     started_at = time.perf_counter()
 
     try:

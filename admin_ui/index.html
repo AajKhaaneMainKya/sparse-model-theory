@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rahul Admin | Resume Upload</title>
+  <link rel="stylesheet" href="/admin-static/styles.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-panel" aria-labelledby="admin-title">
+      <p class="kicker">Local admin</p>
+      <h1 id="admin-title">Resume Upload</h1>
+      <p class="note">Uploaded resumes become part of the public Ask Rahul corpus.</p>
+
+      <form id="resume-form">
+        <label for="resume-file">Resume file</label>
+        <input
+          id="resume-file"
+          name="resume"
+          type="file"
+          accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          required
+        />
+
+        <label for="resume-label">Label</label>
+        <input id="resume-label" name="label" type="text" placeholder="product-lead-resume" autocomplete="off" />
+
+        <label for="admin-token">Admin token</label>
+        <input id="admin-token" name="adminToken" type="password" autocomplete="off" />
+
+        <button type="submit">Upload Resume</button>
+      </form>
+
+      <div id="upload-status" class="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="/admin-static/app.js" defer></script>
+</body>
+</html>

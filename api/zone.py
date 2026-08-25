@@ -10,9 +10,6 @@ import time
 from typing import Literal
 from urllib import error, request
 
-from engine.retrieval import Match
-
-
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[1]

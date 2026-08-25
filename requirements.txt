@@ -2,3 +2,5 @@ PyYAML
 sentence-transformers
 fastapi
 uvicorn
+pypdf
+python-docx

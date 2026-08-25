@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rahul | Thinking Portfolio</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" data-route>Rahul</a>
+    <nav aria-label="Public portfolio">
+      <a href="/" data-route>Overview</a>
+      <a href="/projects" data-route>Projects</a>
+      <a href="/ask" data-route>Ask Rahul</a>
+      <a href="/contact" data-route>Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" data-page="home">
+      <div class="hero-copy">
+        <p class="kicker">AI product systems / bounded reasoning / operator judgment</p>
+        <h1>Thinking portfolio for ambiguous AI product work.</h1>
+        <p class="lede">
+          Public proof that Rahul can turn open-ended questions into bounded systems:
+          deterministic routing, semantic retrieval, FastAPI surfaces, OpenAI-compatible model calls,
+          local fallback behavior, and honest caveats when evidence runs out.
+        </p>
+        <form class="ask-strip" data-ask-form>
+          <input name="question" type="search" placeholder="Ask about Rahul's work..." autocomplete="off" />
+          <button type="submit">Ask</button>
+        </form>
+      </div>
+      <div class="proof-panel" aria-label="Portfolio signals">
+        <div>
+          <span>01</span>
+          <strong>Agentic systems</strong>
+          <p>Planning, gap detection, optional follow-up, synthesis, and bounded execution surfaces.</p>
+        </div>
+        <div>
+          <span>02</span>
+          <strong>Applied AI stack</strong>
+          <p>FastAPI, OpenAI-compatible providers, local model fallback, retrieval, SQLite, browser UI.</p>
+        </div>
+        <div>
+          <span>03</span>
+          <strong>Ambiguity discipline</strong>
+          <p>Scope checks, caveats, missing-evidence behavior, and explicit public/private boundaries.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band" data-page="home">
+      <div class="section-heading">
+        <p class="kicker">Proof of work</p>
+        <h2>What the public corpus supports</h2>
+      </div>
+      <div class="signal-grid">
+        <article>
+          <h3>Built agentic interfaces</h3>
+          <p>Open-ended entry points with constrained backend contracts, including `/openclaw/agent`.</p>
+        </article>
+        <article>
+          <h3>Works across model paths</h3>
+          <p>OpenAI-compatible calls, Ollama-style local fallback, structured prompts, and failure-aware responses.</p>
+        </article>
+        <article>
+          <h3>Reasons through uncertainty</h3>
+          <p>Designs systems that state unknowns, separate evidence from claims, and avoid overreach.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-band" data-page="projects">
+      <div class="section-heading">
+        <p class="kicker">Projects</p>
+        <h2>Public portfolio artifacts</h2>
+      </div>
+      <div class="project-list">
+        <article>
+          <span class="project-index">01</span>
+          <div>
+            <h3>Sparse Model Theory</h3>
+            <p>Deterministic routing, note schema, semantic retrieval, and bounded orchestration for contested reasoning.</p>
+          </div>
+        </article>
+        <article>
+          <span class="project-index">02</span>
+          <div>
+            <h3>Second Brain Console</h3>
+            <p>FastAPI, OpenAI provider path, local model fallback, thinking modes, thread context, and UI for analysis packets.</p>
+          </div>
+        </article>
+        <article>
+          <span class="project-index">03</span>
+          <div>
+            <h3>OpenClaw Demo</h3>
+            <p>Open-ended interface with bounded execution at `/openclaw/agent`, including explicit no-tool and no-arbitrary-file-read boundaries.</p>
+          </div>
+        </article>
+        <article>
+          <span class="project-index">04</span>
+          <div>
+            <h3>Akshar / Sahayak</h3>
+            <p>Included only as high-level project references until more public-safe detail is added to the corpus.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="ask-page section-band" data-page="ask">
+      <div class="section-heading">
+        <p class="kicker">Ask Rahul</p>
+        <h2>Ask against the public proof corpus</h2>
+      </div>
+      <form class="ask-box" data-ask-form>
+        <input name="question" type="search" placeholder="Ask about Rahul's work..." autocomplete="off" />
+        <button type="submit">Ask</button>
+      </form>
+      <div class="chips" aria-label="Example questions">
+        <button type="button" data-question="Has Rahul built agentic systems?">Has Rahul built agentic systems?</button>
+        <button type="button" data-question="What has Rahul built with OpenAI?">What has Rahul built with OpenAI?</button>
+        <button type="button" data-question="Is Rahul strong at ambiguous product thinking?">Is Rahul strong at ambiguous product thinking?</button>
+        <button type="button" data-question="What should I interview Rahul about?">What should I interview Rahul about?</button>
+        <button type="button" data-question="Has Rahul shipped production systems?">Has Rahul shipped production systems?</button>
+      </div>
+      <div id="ask-status" class="status" aria-live="polite"></div>
+      <section id="ask-results" class="ask-results" hidden>
+        <article class="answer-block">
+          <p class="kicker">Answer</p>
+          <div id="answer-text"></div>
+        </article>
+        <div class="result-columns">
+          <section>
+            <h3>Evidence</h3>
+            <div id="evidence-list" class="evidence-list"></div>
+          </section>
+          <section>
+            <h3>Caveats</h3>
+            <ul id="caveat-list"></ul>
+            <h3>Interview Questions</h3>
+            <ul id="interview-list"></ul>
+          </section>
+        </div>
+      </section>
+    </section>
+
+    <section class="section-band" data-page="contact">
+      <div class="section-heading">
+        <p class="kicker">Contact / links</p>
+        <h2>Public links belong in the corpus</h2>
+      </div>
+      <div class="contact-panel">
+        <p>
+          This repository/session does not include verified public contact links. Add sanitized links to
+          `public_corpus/profile.md` before publishing them here.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
