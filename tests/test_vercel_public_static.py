@@ -33,6 +33,7 @@ class VercelPublicStaticTests(unittest.TestCase):
             {
                 ".vercelignore",
                 "README.md",
+                "assets/rahul.jpg",
                 "assets/rahul.jpg.README.md",
                 "app.js",
                 "index.html",
@@ -54,6 +55,7 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertIn("rahul.jpg", combined)
         self.assertIn("localStorage", combined)
         self.assertIn("prefers-color-scheme", combined)
+        self.assertIn("data-ask-output", combined)
         self.assertNotIn("localhost", combined)
         self.assertNotIn("127.0.0.1", combined)
         self.assertNotIn("/console", combined)
@@ -64,6 +66,31 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertNotIn("OPENAI_API_KEY", combined)
         self.assertNotIn("interview question", combined.lower())
         self.assertNotIn("caveat", combined.lower())
+        self.assertNotIn("How is Rahul doing at his present job?", combined)
+
+    def test_answer_surfaces_are_local_to_their_modules(self):
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+
+        ask_index = html.index('id="ask-rahul"')
+        ask_output_index = html.index("data-ask-output", ask_index)
+        proof_index = html.index('id="public-proof"')
+        work_index = html.index('id="work-model"')
+        self.assertLess(ask_output_index, proof_index)
+        self.assertLess(ask_output_index, work_index)
+
+        thinking_index = html.index('id="thinking-window"')
+        thinking_output_index = html.index("data-ask-output", thinking_index)
+        soft_contact_index = html.index("data-soft-contact", thinking_index)
+        self.assertLess(thinking_output_index, soft_contact_index)
+
+    def test_photo_references_existing_asset_and_has_fallback(self):
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn('src="assets/rahul.jpg"', html)
+        self.assertTrue((PUBLIC_DIR / "assets" / "rahul.jpg").exists())
+        self.assertIn("data-portrait", html)
+        self.assertIn("portrait-fallback", html)
+        self.assertIn("portrait-missing", (PUBLIC_DIR / "app.js").read_text(encoding="utf-8"))
 
     def test_admin_static_js_does_not_embed_admin_secret_names(self):
         admin_js = (ROOT / "admin_ui" / "app.js").read_text(encoding="utf-8")

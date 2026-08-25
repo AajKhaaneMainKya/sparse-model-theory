@@ -5,16 +5,9 @@ const THINKING_COUNT_KEY = "rahul-thinking-window-count";
 const CONTACT_PROFILE_KEY = "rahul-public-contact";
 const THEME_KEY = "rahul-theme";
 
-const els = {
-  answerZone: document.querySelector("#answer-zone"),
-  status: document.querySelector("#ask-status"),
-  answer: document.querySelector("#answer-text"),
-  evidence: document.querySelector("#evidence-list"),
-  contactStatus: document.querySelector("#contact-status"),
-  softContact: document.querySelector("[data-soft-contact]"),
-  themeToggle: document.querySelector("[data-theme-toggle]"),
-  portrait: document.querySelector("[data-portrait]"),
-};
+const themeToggle = document.querySelector("[data-theme-toggle]");
+const themeIcon = document.querySelector("[data-theme-icon]");
+const softContact = document.querySelector("[data-soft-contact]");
 
 function apiPath(path) {
   return path;
@@ -29,6 +22,7 @@ function preferredTheme() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem(THEME_KEY, theme);
+  if (themeIcon) themeIcon.textContent = theme === "dark" ? "☾" : "☼";
 }
 
 function currentPath() {
@@ -53,58 +47,32 @@ function renderRoute() {
     const href = link.getAttribute("href");
     link.classList.toggle("active", href === path || (href === "/" && path === "/"));
   }
+
+  if (window.location.pathname !== path) {
+    window.history.replaceState({}, "", path);
+  }
 }
 
 function go(path) {
   window.history.pushState({}, "", path);
   renderRoute();
+  window.scrollTo({top: 0, behavior: "smooth"});
 }
 
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.detail || `Request failed with HTTP ${response.status}`);
+    throw new Error("That did not go through. Try a shorter note or a valid email.");
   }
   return data;
 }
 
-function setStatus(message, kind = "") {
-  els.status.textContent = message;
-  els.status.className = `status ${kind}`.trim();
-}
-
-function splitSource(source) {
-  const [file, section] = String(source || "public_corpus").split("#");
-  return {file, section: section || "Summary"};
-}
-
-function renderEvidence(items) {
-  els.evidence.innerHTML = "";
-  if (!items || !items.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty";
-    empty.textContent = "No public evidence supports that claim yet.";
-    els.evidence.appendChild(empty);
-    return;
-  }
-
-  for (const item of items) {
-    const row = document.createElement("article");
-    const source = splitSource(item.source);
-    const meta = document.createElement("p");
-    const excerpt = document.createElement("p");
-
-    meta.className = "evidence-source";
-    meta.textContent = `${source.file} · ${source.section}`;
-    excerpt.textContent = item.excerpt || "";
-
-    row.append(meta, excerpt);
-    els.evidence.appendChild(row);
-  }
-}
-
 function contactProfile() {
-  return JSON.parse(localStorage.getItem(CONTACT_PROFILE_KEY) || "{}");
+  try {
+    return JSON.parse(localStorage.getItem(CONTACT_PROFILE_KEY) || "{}");
+  } catch {
+    return {};
+  }
 }
 
 function saveContactProfile(form) {
@@ -122,28 +90,102 @@ function thinkingCount() {
 function incrementThinkingCount() {
   const next = thinkingCount() + 1;
   localStorage.setItem(THINKING_COUNT_KEY, String(next));
-  if (next >= 2 && els.softContact) {
-    els.softContact.hidden = false;
-  }
+  if (next >= 2 && softContact) softContact.hidden = false;
 }
 
-async function ask(question, sourcePage = "portfolio") {
-  const cleaned = question.trim();
-  if (!cleaned) {
-    setStatus("Ask a sharper question.", "error");
+function splitSource(source) {
+  const [file, section] = String(source || "public_corpus").split("#");
+  return {file, section: section || "Summary"};
+}
+
+function statusText(evidenceCount) {
+  return evidenceCount ? "Evidence-backed" : "Bounded by public evidence";
+}
+
+function setSurfaceLoading(surface, question) {
+  const output = surface.querySelector("[data-ask-output]");
+  const label = surface.querySelector("[data-question-label]");
+  const status = surface.querySelector("[data-ask-status]");
+  const answer = surface.querySelector("[data-answer-text]");
+  const evidence = surface.querySelector("[data-evidence-list]");
+
+  output.hidden = false;
+  output.dataset.state = "loading";
+  label.textContent = question;
+  status.textContent = "Reading public evidence";
+  answer.textContent = "";
+  evidence.innerHTML = "";
+}
+
+function renderEvidence(surface, items) {
+  const evidence = surface.querySelector("[data-evidence-list]");
+  evidence.innerHTML = "";
+
+  if (!items || !items.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = "No public evidence supports that claim yet.";
+    evidence.appendChild(empty);
     return;
   }
 
-  if (sourcePage === "thinking_window") {
-    go("/thinking-window");
-    incrementThinkingCount();
+  for (const item of items) {
+    const source = splitSource(item.source);
+    const row = document.createElement("article");
+    const meta = document.createElement("p");
+    const excerpt = document.createElement("p");
+
+    meta.className = "evidence-source";
+    meta.textContent = `${source.file} · ${source.section}`;
+    excerpt.textContent = item.excerpt || "";
+
+    row.append(meta, excerpt);
+    evidence.appendChild(row);
+  }
+}
+
+function renderAnswer(surface, question, data) {
+  const output = surface.querySelector("[data-ask-output]");
+  const label = surface.querySelector("[data-question-label]");
+  const status = surface.querySelector("[data-ask-status]");
+  const answer = surface.querySelector("[data-answer-text]");
+  const evidenceItems = data.evidence || [];
+
+  output.hidden = false;
+  output.dataset.state = "ready";
+  label.textContent = question;
+  status.textContent = statusText(evidenceItems.length);
+  answer.textContent = data.answer || "";
+  renderEvidence(surface, evidenceItems);
+}
+
+function renderAskError(surface, question, message) {
+  const output = surface.querySelector("[data-ask-output]");
+  const label = surface.querySelector("[data-question-label]");
+  const status = surface.querySelector("[data-ask-status]");
+  const answer = surface.querySelector("[data-answer-text]");
+
+  output.hidden = false;
+  output.dataset.state = "error";
+  label.textContent = question;
+  status.textContent = "Not sent";
+  answer.textContent = message || "That did not go through. Try again in a moment.";
+  renderEvidence(surface, []);
+}
+
+async function askFromSurface(surface, question) {
+  const cleaned = question.trim();
+  const sourcePage = surface.dataset.sourcePage || "portfolio";
+
+  if (!cleaned) {
+    renderAskError(surface, "No question yet", "Ask a sharper question.");
+    return;
   }
 
+  if (sourcePage === "thinking_window") incrementThinkingCount();
+
   const profile = contactProfile();
-  els.answerZone.hidden = false;
-  els.answer.textContent = "";
-  renderEvidence([]);
-  setStatus("Reading the public evidence trail...");
+  setSurfaceLoading(surface, cleaned);
 
   try {
     const response = await fetch(apiPath(ASK_RAHUL_ENDPOINT), {
@@ -157,11 +199,9 @@ async function ask(question, sourcePage = "portfolio") {
       }),
     });
     const data = await parseResponse(response);
-    els.answer.textContent = data.answer || "";
-    renderEvidence(data.evidence || []);
-    setStatus((data.evidence || []).length ? "Answered with public evidence." : "Bounded by available public evidence.", "ok");
+    renderAnswer(surface, cleaned, data);
   } catch (error) {
-    setStatus(error.message, "error");
+    renderAskError(surface, cleaned, error.message);
   }
 }
 
@@ -175,8 +215,8 @@ async function submitContact(form, statusElement, source = "contact") {
     source,
   };
 
-  statusElement.textContent = "Sending...";
-  statusElement.className = "status";
+  statusElement.textContent = "Sending";
+  statusElement.className = "form-status";
 
   try {
     const response = await fetch(apiPath(CONTACT_ENDPOINT), {
@@ -187,11 +227,11 @@ async function submitContact(form, statusElement, source = "contact") {
     await parseResponse(response);
     saveContactProfile(form);
     statusElement.textContent = "Received. Rahul has the signal.";
-    statusElement.className = "status ok";
+    statusElement.className = "form-status ok";
     form.reset();
   } catch (error) {
     statusElement.textContent = error.message;
-    statusElement.className = "status error";
+    statusElement.className = "form-status error";
   }
 }
 
@@ -205,24 +245,31 @@ for (const link of document.querySelectorAll("[data-route]")) {
 for (const form of document.querySelectorAll("[data-ask-form]")) {
   form.addEventListener("submit", event => {
     event.preventDefault();
-    ask(form.elements.question.value, form.dataset.sourcePage || "portfolio");
+    const surface = form.closest("[data-ask-surface]");
+    askFromSurface(surface, form.elements.question.value);
   });
 }
 
 for (const chip of document.querySelectorAll("[data-question]")) {
-  chip.addEventListener("click", () => ask(chip.dataset.question, chip.dataset.sourcePage || "portfolio"));
+  chip.addEventListener("click", () => {
+    const surface = chip.closest("[data-ask-surface]");
+    const field = surface.querySelector("[name='question']");
+    field.value = chip.dataset.question;
+    askFromSurface(surface, chip.dataset.question);
+  });
 }
 
 for (const form of document.querySelectorAll("[data-contact-form]")) {
+  const status = form.querySelector("[data-contact-status]");
   form.addEventListener("submit", event => {
     event.preventDefault();
-    submitContact(form, els.contactStatus, "contact");
+    submitContact(form, status, "contact");
   });
 }
 
 for (const form of document.querySelectorAll("[data-inline-contact-form]")) {
   const status = document.createElement("p");
-  status.className = "status";
+  status.className = "form-status";
   form.after(status);
   form.addEventListener("submit", event => {
     event.preventDefault();
@@ -230,19 +277,20 @@ for (const form of document.querySelectorAll("[data-inline-contact-form]")) {
   });
 }
 
-if (els.themeToggle) {
-  els.themeToggle.addEventListener("click", () => {
-    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+for (const portrait of document.querySelectorAll("[data-portrait]")) {
+  portrait.addEventListener("error", () => {
+    portrait.hidden = true;
+    portrait.closest(".portrait-wrap")?.classList.add("portrait-missing");
   });
 }
 
-if (els.portrait) {
-  els.portrait.addEventListener("error", () => {
-    els.portrait.hidden = true;
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
   });
 }
 
 window.addEventListener("popstate", renderRoute);
 applyTheme(preferredTheme());
-if (thinkingCount() >= 2 && els.softContact) els.softContact.hidden = false;
+if (thinkingCount() >= 2 && softContact) softContact.hidden = false;
 renderRoute();

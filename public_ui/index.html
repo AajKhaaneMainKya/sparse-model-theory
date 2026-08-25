@@ -8,142 +8,211 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="/" data-route>Rahul Shiv Shankar</a>
+    <a class="brand" href="/" data-route>
+      <span>Rahul Shiv Shankar</span>
+      <small>public interface</small>
+    </a>
     <nav aria-label="Public navigation">
       <a href="/" data-route>Portfolio</a>
       <a href="/thinking-window" data-route>Thinking Window</a>
       <a href="/contact" data-route>Contact</a>
     </nav>
-    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">◐</button>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">
+      <span data-theme-icon>◐</span>
+    </button>
   </header>
 
   <main>
-    <section class="hero" data-page="portfolio">
-      <div class="hero-copy">
-        <p class="kicker">Product judgment / GTM depth / agentic systems</p>
-        <h1>Rahul Shiv Shankar</h1>
-        <p class="positioning">An operator-builder for ambiguous product bets, founder-speed execution, and AI systems that need judgment before scale.</p>
-        <form class="ask-surface" data-ask-form data-source-page="portfolio">
-          <input name="question" type="search" placeholder="Ask Rahul from public evidence..." autocomplete="off" />
-          <button type="submit">Ask Rahul</button>
-        </form>
-        <p class="evidence-line">Answers from public projects, resumes, and proof-of-work.</p>
-      </div>
-      <aside class="portrait-panel" aria-label="Rahul photo">
-        <img src="/portfolio-static/assets/rahul.jpg" alt="Rahul Shiv Shankar" data-portrait />
-        <div class="portrait-fallback">R</div>
-      </aside>
-    </section>
+    <section class="portfolio-page" data-page="portfolio">
+      <section class="hero-shell" id="portfolio">
+        <div class="hero-grid">
+          <div class="identity-block">
+            <p class="eyebrow">Product judgment / GTM depth / agentic systems</p>
+            <h1>Rahul Shiv Shankar</h1>
+            <p class="positioning">Operator-builder for product bets, GTM depth, and agentic systems.</p>
+            <div class="hero-actions" aria-label="Primary actions">
+              <a href="#ask-rahul" class="action-link">Ask Rahul</a>
+              <a href="/thinking-window" class="action-link" data-route>Open Thinking Window</a>
+              <a href="#public-proof" class="action-link">View Proof</a>
+              <a href="/contact" class="action-link" data-route>Contact Rahul</a>
+            </div>
+          </div>
 
-    <section class="proof-section" data-page="portfolio">
-      <div class="section-heading">
-        <p class="kicker">Public proof</p>
-        <h2>Built work, not just claims.</h2>
-      </div>
-      <div class="project-rows">
-        <a class="project-row feature-link" href="https://aksharthewriter.vercel.app/offline" target="_blank" rel="noopener">
-          <span>01</span>
-          <strong>Akshar</strong>
-          <p>Agentic writing system with a staged content pipeline and voice-sensitive execution.</p>
-          <em>Open proof</em>
-        </a>
-        <a class="project-row feature-link" href="https://sahayakhq.co/" target="_blank" rel="noopener">
-          <span>02</span>
-          <strong>Sahayak</strong>
-          <p>Hiring marketplace and LLM-assisted matching direction for Indian startup talent.</p>
-          <em>Open proof</em>
-        </a>
-        <div class="project-row">
-          <span>03</span>
-          <strong>Sparse Model Theory</strong>
-          <p>Deterministic routing, schema-bound reasoning, public evidence boundaries, and retrieval discipline.</p>
-          <em>Evidence trail</em>
+          <aside class="portrait-wrap" aria-label="Rahul portrait">
+            <img src="/portfolio-static/assets/rahul.jpg" alt="Rahul Shiv Shankar" data-portrait />
+            <div class="portrait-fallback" aria-hidden="true">
+              <span>RS</span>
+            </div>
+          </aside>
         </div>
-        <div class="project-row">
-          <span>04</span>
-          <strong>OpenClaw Demo</strong>
-          <p>A public agent surface that separates flexible input from bounded backend behavior.</p>
-          <em>Evidence trail</em>
+
+        <section class="inquiry-panel hero-inquiry" id="ask-rahul" data-ask-surface data-source-page="portfolio">
+          <div class="surface-heading">
+            <p class="eyebrow">Ask Rahul</p>
+            <p>Answers from public projects, resumes, and proof-of-work.</p>
+          </div>
+          <form class="ask-form" data-ask-form>
+            <input name="question" type="search" placeholder="Ask a grounded question about Rahul..." autocomplete="off" />
+            <button type="submit">Ask</button>
+          </form>
+          <div class="prompt-chips" aria-label="Suggested Ask Rahul prompts">
+            <button type="button" data-question="Has Rahul built agentic systems?">Has Rahul built agentic systems?</button>
+            <button type="button" data-question="What has Rahul shipped?">What has Rahul shipped?</button>
+            <button type="button" data-question="Where does Rahul have GTM depth?">Where does Rahul have GTM depth?</button>
+            <button type="button" data-question="What kind of founder problems does Rahul understand?">What kind of founder problems does Rahul understand?</button>
+            <button type="button" data-question="What is Rahul’s education?">What is Rahul’s education?</button>
+          </div>
+          <div class="answer-panel" data-ask-output hidden>
+            <div class="answer-meta">
+              <span data-question-label></span>
+              <strong data-ask-status aria-live="polite"></strong>
+            </div>
+            <article class="answer-text" data-answer-text></article>
+            <div class="evidence-list" data-evidence-list aria-label="Evidence trail"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="proof-section page-section" id="public-proof">
+        <div class="section-lead">
+          <p class="eyebrow">Public proof</p>
+          <h2>Work with a trail.</h2>
+          <p>Built surfaces, market motion, and reasoning systems that can be inspected.</p>
         </div>
+        <div class="project-rows">
+          <a class="project-row" href="https://aksharthewriter.vercel.app/offline" target="_blank" rel="noopener">
+            <span class="row-index">01</span>
+            <strong>Akshar</strong>
+            <p>Agentic writing workflow with staged drafting, editorial control, and offline execution.</p>
+            <span class="row-tags">AI writing / product system</span>
+            <em>Open</em>
+          </a>
+          <a class="project-row" href="https://sahayakhq.co/" target="_blank" rel="noopener">
+            <span class="row-index">02</span>
+            <strong>Sahayak</strong>
+            <p>Talent and hiring surface shaped around startup operating reality and matching quality.</p>
+            <span class="row-tags">Marketplace / GTM</span>
+            <em>Open</em>
+          </a>
+          <div class="project-row">
+            <span class="row-index">03</span>
+            <strong>Sparse Model Theory</strong>
+            <p>Evidence-aware reasoning architecture with deterministic routing and public corpus boundaries.</p>
+            <span class="row-tags">Retrieval / systems</span>
+            <em>Evidence</em>
+          </div>
+          <div class="project-row">
+            <span class="row-index">04</span>
+            <strong>OpenClaw demo</strong>
+            <p>Public agent endpoint that separates flexible interaction from bounded backend behavior.</p>
+            <span class="row-tags">Agents / FastAPI</span>
+            <em>Evidence</em>
+          </div>
+        </div>
+      </section>
+
+      <section class="work-model page-section" id="work-model">
+        <div class="section-lead">
+          <p class="eyebrow">Work Model</p>
+          <h2>Where judgment shows up.</h2>
+        </div>
+        <div class="work-river">
+          <div>
+            <span>Product bets</span>
+            <p>Turns ambiguous user pressure into useful product shape, constraints, and decision cadence.</p>
+          </div>
+          <div>
+            <span>GTM depth</span>
+            <p>Works across funnels, sales feedback, pricing, campaigns, operating rhythm, and market learning.</p>
+          </div>
+          <div>
+            <span>Agentic systems</span>
+            <p>Builds around retrieval, fallbacks, evidence, tool boundaries, and product-grade interaction loops.</p>
+          </div>
+          <div>
+            <span>Education</span>
+            <p>MBA at BITSoM / BITS Pilani School of Management with an engineering foundation from Jamia Millia Islamia.</p>
+          </div>
+          <div>
+            <span>Community</span>
+            <p>Buildathons, builder rooms, and operating with people who move from signal to shipped work.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="thinking-page page-section" data-page="thinking" id="thinking-window">
+      <div class="thinking-layout">
+        <div class="section-lead">
+          <p class="eyebrow">Thinking Window</p>
+          <h1>Open the reasoning surface.</h1>
+          <p>Use this for messy scenarios, product calls, GTM judgment, or agentic-system tradeoffs.</p>
+        </div>
+        <section class="inquiry-panel thinking-inquiry" data-ask-surface data-source-page="thinking_window">
+          <form class="ask-form vertical" data-ask-form>
+            <textarea name="question" placeholder="Drop a scenario Rahul should reason through..." autocomplete="off"></textarea>
+            <button type="submit">Think Through</button>
+          </form>
+          <div class="prompt-chips" aria-label="Thinking Window prompts">
+            <button type="button" data-question="How would Rahul think through a messy GTM problem?">Messy GTM problem</button>
+            <button type="button" data-question="How does Rahul evaluate whether to build?">Build or not</button>
+            <button type="button" data-question="What patterns does Rahul notice in founder-led products?">Founder-led products</button>
+            <button type="button" data-question="How would Rahul reason about agentic systems?">Agentic systems</button>
+            <button type="button" data-question="What kind of problems does Rahul seem built for?">Problem fit</button>
+          </div>
+          <div class="answer-panel" data-ask-output hidden>
+            <div class="answer-meta">
+              <span data-question-label></span>
+              <strong data-ask-status aria-live="polite"></strong>
+            </div>
+            <article class="answer-text" data-answer-text></article>
+            <div class="evidence-list" data-evidence-list aria-label="Evidence trail"></div>
+          </div>
+          <section class="soft-contact" data-soft-contact hidden>
+            <div>
+              <p class="eyebrow">Continue the thread</p>
+              <h3>If this is useful, leave a way to continue the conversation.</h3>
+            </div>
+            <form data-inline-contact-form>
+              <input name="name" placeholder="Name" autocomplete="name" />
+              <input name="email" type="email" placeholder="Email" autocomplete="email" required />
+              <input name="phone" placeholder="Phone" autocomplete="tel" />
+              <select name="context_type" aria-label="Context type">
+                <option value="founder">Founder</option>
+                <option value="recruiter">Recruiter</option>
+                <option value="collaborator">Collaborator</option>
+                <option value="other">Other</option>
+              </select>
+              <textarea name="message" placeholder="Context" required></textarea>
+              <button type="submit">Send Signal</button>
+            </form>
+          </section>
+        </section>
       </div>
     </section>
 
-    <section class="judgment-section" data-page="portfolio">
-      <div class="section-heading">
-        <p class="kicker">Work Model</p>
-        <h2>Where Rahul tends to be useful.</h2>
-      </div>
-      <div class="judgment-grid">
-        <p><strong>Product judgment</strong><br />Turns vague user and business pressure into buildable product surfaces.</p>
-        <p><strong>GTM depth</strong><br />Understands funnels, pricing, P&L, campaigns, sales feedback, and operating cadence.</p>
-        <p><strong>Agentic systems</strong><br />Builds around retrieval, constraints, fallback behavior, and evidence-backed answers.</p>
-        <p><strong>Education</strong><br />MBA at BITSoM / BITS Pilani School of Management; engineering foundation from Jamia Millia Islamia.</p>
-        <p><strong>Community</strong><br />Hosted buildathons, mentored teams, and works well around high-agency builders.</p>
-      </div>
-    </section>
-
-    <section class="ask-page" data-page="thinking">
-      <div class="section-heading">
-        <p class="kicker">Thinking Window</p>
-        <h2>Open a public reasoning surface.</h2>
-      </div>
-      <form class="ask-surface wide" data-ask-form data-source-page="thinking_window">
-        <input name="question" type="search" placeholder="Ask how Rahul would reason through a problem..." autocomplete="off" />
-        <button type="submit">Open</button>
-      </form>
-      <div class="chips" aria-label="Thinking Window prompts">
-        <button type="button" data-question="How would Rahul think through a messy GTM problem?" data-source-page="thinking_window">Messy GTM problem</button>
-        <button type="button" data-question="How does Rahul evaluate whether to build?" data-source-page="thinking_window">Build or not</button>
-        <button type="button" data-question="What patterns does Rahul notice in founder-led products?" data-source-page="thinking_window">Founder-led products</button>
-        <button type="button" data-question="How would Rahul reason about agentic systems?" data-source-page="thinking_window">Agentic systems</button>
-        <button type="button" data-question="What kind of problems does Rahul seem built for?" data-source-page="thinking_window">Problem fit</button>
-      </div>
-      <section class="soft-contact" data-soft-contact hidden>
-        <p>If this is useful, leave a way to continue the conversation.</p>
-        <form data-inline-contact-form>
+    <section class="contact-page page-section" data-page="contact" id="contact">
+      <div class="contact-layout">
+        <div class="section-lead">
+          <p class="eyebrow">Contact Rahul</p>
+          <h1>Leave a clear signal.</h1>
+          <p>Founder problem, role conversation, collaboration, or a specific context worth unpacking.</p>
+        </div>
+        <form class="contact-form" data-contact-form>
           <input name="name" placeholder="Name" autocomplete="name" />
           <input name="email" type="email" placeholder="Email" autocomplete="email" required />
-          <input name="phone" placeholder="Phone" autocomplete="tel" />
+          <input name="phone" placeholder="Phone number" autocomplete="tel" />
           <select name="context_type" aria-label="Context type">
             <option value="founder">Founder</option>
             <option value="recruiter">Recruiter</option>
             <option value="collaborator">Collaborator</option>
             <option value="other">Other</option>
           </select>
-          <input name="message" placeholder="Context" required />
-          <button type="submit">Send</button>
+          <textarea name="message" placeholder="Message or context" required></textarea>
+          <button type="submit">Contact Rahul</button>
+          <p class="form-status" data-contact-status aria-live="polite"></p>
         </form>
-      </section>
-    </section>
-
-    <section id="answer-zone" class="answer-zone" hidden>
-      <div class="answer-head">
-        <p class="kicker">Answer</p>
-        <div id="ask-status" class="status" aria-live="polite"></div>
       </div>
-      <article id="answer-text" class="answer-text"></article>
-      <div id="evidence-list" class="evidence-list" aria-label="Evidence trail"></div>
-    </section>
-
-    <section class="contact-page" data-page="contact">
-      <div class="section-heading">
-        <p class="kicker">Contact Rahul</p>
-        <h2>Leave a clear signal.</h2>
-      </div>
-      <form class="contact-form" data-contact-form>
-        <input name="name" placeholder="Name" autocomplete="name" />
-        <input name="email" type="email" placeholder="Email" autocomplete="email" required />
-        <input name="phone" placeholder="Phone number" autocomplete="tel" />
-        <select name="context_type" aria-label="Context type">
-          <option value="founder">Founder</option>
-          <option value="recruiter">Recruiter</option>
-          <option value="collaborator">Collaborator</option>
-          <option value="other">Other</option>
-        </select>
-        <textarea name="message" placeholder="Message or context" required></textarea>
-        <button type="submit">Contact Rahul</button>
-      </form>
-      <p id="contact-status" class="status" aria-live="polite"></p>
     </section>
   </main>
 
