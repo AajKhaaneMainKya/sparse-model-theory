@@ -407,6 +407,7 @@ def _notify_contact_request(record: dict[str, object]) -> NotificationResult:
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "User-Agent": "askrahul-portfolio/1.0",
         },
         method="POST",
     )

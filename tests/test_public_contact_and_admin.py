@@ -108,6 +108,7 @@ class PublicContactAndAdminTests(unittest.TestCase):
         self.assertEqual(request.get_method(), "POST")
         self.assertEqual(request.headers["Authorization"], "Bearer test-key")
         self.assertEqual(request.headers["Content-type"], "application/json")
+        self.assertEqual(request.headers["User-agent"], "askrahul-portfolio/1.0")
         resend_body = json.loads(request.data.decode("utf-8"))
         self.assertEqual(set(resend_body), {"from", "to", "subject", "text"})
         self.assertEqual(resend_body["from"], "from@example.com")
@@ -183,6 +184,41 @@ class PublicContactAndAdminTests(unittest.TestCase):
         self.assertEqual(stored["notification_status"], "failed")
         self.assertIn("http_status=403", stored["notification_error"])
         self.assertIn("from domain is not verified", stored["notification_error"])
+        self.assertNotIn("test-key-secret", stored["notification_error"])
+        self.assertNotIn("notification_error", body)
+
+    def test_resend_403_1010_stores_user_agent_diagnostic(self):
+        self.env.stop()
+        self.env = mock.patch.dict(
+            os.environ,
+            {
+                "SMT_DB_PATH": os.path.join(self.tmp.name, "notify-1010.db"),
+                "CONTACT_NOTIFY_PROVIDER": "resend",
+                "RESEND_API_KEY": "test-key-secret",
+                "CONTACT_NOTIFY_TO": "to@example.com",
+                "CONTACT_NOTIFY_FROM": "from@example.com",
+            },
+            clear=True,
+        )
+        self.env.start()
+        db._initialized_paths.clear()
+        db.init_db()
+
+        error = HTTPError(
+            "https://api.resend.com/emails",
+            403,
+            "Forbidden",
+            {},
+            BytesIO(b"error code: 1010"),
+        )
+        with mock.patch.object(server.urlrequest, "urlopen", side_effect=error):
+            body = server.contact_request(server.ContactRequest(email="a@example.com", message="hello"))
+
+        [stored] = db.list_contact_requests()
+        self.assertTrue(body["success"])
+        self.assertEqual(stored["notification_status"], "failed")
+        self.assertIn("http_status=403", stored["notification_error"])
+        self.assertIn("error code: 1010", stored["notification_error"])
         self.assertNotIn("test-key-secret", stored["notification_error"])
         self.assertNotIn("notification_error", body)
 
