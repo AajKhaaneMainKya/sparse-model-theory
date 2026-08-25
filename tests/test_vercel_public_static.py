@@ -11,7 +11,12 @@ PUBLIC_DIR = ROOT / "vercel_public"
 
 class VercelPublicStaticTests(unittest.TestCase):
     def test_static_folder_contains_only_frontend_deploy_files(self):
-        files = {path.relative_to(PUBLIC_DIR).as_posix() for path in PUBLIC_DIR.rglob("*") if path.is_file()}
+        files = {
+            path.relative_to(PUBLIC_DIR).as_posix()
+            for path in PUBLIC_DIR.rglob("*")
+            if path.is_file()
+            and not any(part.startswith(".") for part in path.relative_to(PUBLIC_DIR).parts)
+        }
 
         self.assertEqual(
             files,

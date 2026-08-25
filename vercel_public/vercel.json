@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://replace-with-railway-backend-domain.up.railway.app/:path*"
+      "destination": "https://sparse-model-theory-production.up.railway.app/:path*"
     },
     {
       "source": "/projects",

@@ -1,0 +1,746 @@
+{
+  "facts": [
+    {
+      "category": "identity",
+      "confidence": "high",
+      "evidence_text": "Rahul Shiv Shankar",
+      "id": "identity-b47ac31e859c",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "Rahul Shiv Shankar"
+    },
+    {
+      "category": "contact",
+      "confidence": "high",
+      "evidence_text": "rshivs.1295@gmail.com",
+      "id": "contact-d5f014663295",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "rshivs.1295@gmail.com"
+    },
+    {
+      "category": "links",
+      "confidence": "high",
+      "evidence_text": "rshivs.1295@gmail.com",
+      "id": "links-94aaaaa03a99",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "gmail.com"
+    },
+    {
+      "category": "contact",
+      "confidence": "high",
+      "evidence_text": "+91 8766281386",
+      "id": "contact-2b5fa16262d1",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "+91 8766281386"
+    },
+    {
+      "category": "contact",
+      "confidence": "high",
+      "evidence_text": "linkedin.com/in/rshivs",
+      "id": "contact-c11a9796e6ec",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "linkedin.com/in/rshivs"
+    },
+    {
+      "category": "links",
+      "confidence": "high",
+      "evidence_text": "linkedin.com/in/rshivs",
+      "id": "links-e77422f95141",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "linkedin.com/in/rshivs"
+    },
+    {
+      "category": "location",
+      "confidence": "high",
+      "evidence_text": "Mumbai, India",
+      "id": "location-76c33cbff1d5",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "Mumbai, India"
+    },
+    {
+      "category": "summary",
+      "confidence": "high",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "summary-8f2b6015944d",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes."
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "metrics-8561c1b3aed8",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "6+ years"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "metrics-c0eba1a4a5ea",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "100+ participants"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "metrics-f6a8b041f0c9",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "6+"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "metrics-77a5a1a21e4c",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "100+"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "metrics-3a5338eb658b",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "P&L"
+    },
+    {
+      "category": "links",
+      "confidence": "high",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "links-f17a353d19e7",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "sahayakhq.co"
+    },
+    {
+      "category": "communities",
+      "confidence": "high",
+      "evidence_text": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes.",
+      "id": "communities-c5d4161aea76",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Summary",
+      "value": "6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants. At Regenesys owned P&L, launched educational programs from scratch, and drove GTM execution across sales, marketing, and operations. Work best where product ownership is real and GTM is tied to revenue outcomes."
+    },
+    {
+      "category": "projects",
+      "confidence": "high",
+      "evidence_text": "Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and pipeline quality.",
+      "id": "projects-510f6221a56b",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and pipeline quality."
+    },
+    {
+      "category": "communities",
+      "confidence": "high",
+      "evidence_text": "Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and pipeline quality.",
+      "id": "communities-fcb355a159bc",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and pipeline quality."
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and pipeline quality.",
+      "id": "achievements-9f265eebe45f",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and pipeline quality."
+    },
+    {
+      "category": "projects",
+      "confidence": "high",
+      "evidence_text": "Sahayak -- Two-sided hiring marketplace for Indian startups at sahayakhq.co. Pivoted from an agentic ABM system after a senior engineering manager at a buildathon flagged hiring as the hardest unsolved problem given layoff volumes and application overload. LLM judge matches candidates based on what they have actually built, not keyword overlap. Work in progress.",
+      "id": "projects-84959d8e54b2",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Sahayak -- Two-sided hiring marketplace for Indian startups at sahayakhq.co. Pivoted from an agentic ABM system after a senior engineering manager at a buildathon flagged hiring as the hardest unsolved problem given layoff volumes and application overload. LLM judge matches candidates based on what they have actually built, not keyword overlap. Work in progress."
+    },
+    {
+      "category": "communities",
+      "confidence": "high",
+      "evidence_text": "Sahayak -- Two-sided hiring marketplace for Indian startups at sahayakhq.co. Pivoted from an agentic ABM system after a senior engineering manager at a buildathon flagged hiring as the hardest unsolved problem given layoff volumes and application overload. LLM judge matches candidates based on what they have actually built, not keyword overlap. Work in progress.",
+      "id": "communities-211719ed6af4",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Sahayak -- Two-sided hiring marketplace for Indian startups at sahayakhq.co. Pivoted from an agentic ABM system after a senior engineering manager at a buildathon flagged hiring as the hardest unsolved problem given layoff volumes and application overload. LLM judge matches candidates based on what they have actually built, not keyword overlap. Work in progress."
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Sahayak -- Two-sided hiring marketplace for Indian startups at sahayakhq.co. Pivoted from an agentic ABM system after a senior engineering manager at a buildathon flagged hiring as the hardest unsolved problem given layoff volumes and application overload. LLM judge matches candidates based on what they have actually built, not keyword overlap. Work in progress.",
+      "id": "achievements-7eb5cff9813b",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Sahayak -- Two-sided hiring marketplace for Indian startups at sahayakhq.co. Pivoted from an agentic ABM system after a senior engineering manager at a buildathon flagged hiring as the hardest unsolved problem given layoff volumes and application overload. LLM judge matches candidates based on what they have actually built, not keyword overlap. Work in progress."
+    },
+    {
+      "category": "projects",
+      "confidence": "high",
+      "evidence_text": "Resume Screener -- Reverse engineers the resume creation process. Upload a JD and multiple resumes. Rates each resume against the JD in bulk and tells candidates exactly what to add. Built on a fine-tuned Phi-3 Mini model.",
+      "id": "projects-9164aedd1955",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Resume Screener -- Reverse engineers the resume creation process. Upload a JD and multiple resumes. Rates each resume against the JD in bulk and tells candidates exactly what to add. Built on a fine-tuned Phi-3 Mini model."
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Resume Screener -- Reverse engineers the resume creation process. Upload a JD and multiple resumes. Rates each resume against the JD in bulk and tells candidates exactly what to add. Built on a fine-tuned Phi-3 Mini model.",
+      "id": "achievements-1a715bfa5dd8",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Resume Screener -- Reverse engineers the resume creation process. Upload a JD and multiple resumes. Rates each resume against the JD in bulk and tells candidates exactly what to add. Built on a fine-tuned Phi-3 Mini model."
+    },
+    {
+      "category": "projects",
+      "confidence": "high",
+      "evidence_text": "QueryLens -- Chatbot for Tableau dashboards. Paste your Tableau link and auth credentials, then ask questions about your data in plain English.",
+      "id": "projects-5c622fa95683",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "QueryLens -- Chatbot for Tableau dashboards. Paste your Tableau link and auth credentials, then ask questions about your data in plain English."
+    },
+    {
+      "category": "projects",
+      "confidence": "high",
+      "evidence_text": "Hosted three high-engagement buildathons under GrowthX -- Mumbai, Pune, and Hermes Buildathon (100+ participants, July 2026). Mentored teams on revenue generation and virality in a compressed YC-style format.",
+      "id": "projects-54c5c6e103fc",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Hosted three high-engagement buildathons under GrowthX -- Mumbai, Pune, and Hermes Buildathon (100+ participants, July 2026). Mentored teams on revenue generation and virality in a compressed YC-style format."
+    },
+    {
+      "category": "communities",
+      "confidence": "high",
+      "evidence_text": "Hosted three high-engagement buildathons under GrowthX -- Mumbai, Pune, and Hermes Buildathon (100+ participants, July 2026). Mentored teams on revenue generation and virality in a compressed YC-style format.",
+      "id": "communities-b6c446a64c74",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Hosted three high-engagement buildathons under GrowthX -- Mumbai, Pune, and Hermes Buildathon (100+ participants, July 2026). Mentored teams on revenue generation and virality in a compressed YC-style format."
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Hosted three high-engagement buildathons under GrowthX -- Mumbai, Pune, and Hermes Buildathon (100+ participants, July 2026). Mentored teams on revenue generation and virality in a compressed YC-style format.",
+      "id": "achievements-52cc490b9b2c",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Projects",
+      "value": "Hosted three high-engagement buildathons under GrowthX -- Mumbai, Pune, and Hermes Buildathon (100+ participants, July 2026). Mentored teams on revenue generation and virality in a compressed YC-style format."
+    },
+    {
+      "category": "work_experience",
+      "confidence": "high",
+      "evidence_text": "Cadence Design Systems Apr 2025 -- Present\nLead Technical Marketing Engineer | Semiconductor Software\nOwned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and\ncustomer-facing teams globally.\nPrepared presentations, demo flows, and collaterals for product releases, executive reviews, and industry events.",
+      "id": "work-experience-0f2c5610576f",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Cadence Design Systems (Apr 2025 -- Present) \u2014 Lead Technical Marketing Engineer | Semiconductor Software"
+    },
+    {
+      "category": "organizations",
+      "confidence": "high",
+      "evidence_text": "Cadence Design Systems Apr 2025 -- Present\nLead Technical Marketing Engineer | Semiconductor Software\nOwned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and\ncustomer-facing teams globally.\nPrepared presentations, demo flows, and collaterals for product releases, executive reviews, and industry events.",
+      "id": "organizations-1658b440def2",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Cadence Design Systems"
+    },
+    {
+      "category": "dates",
+      "confidence": "high",
+      "evidence_text": "Cadence Design Systems Apr 2025 -- Present\nLead Technical Marketing Engineer | Semiconductor Software\nOwned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and\ncustomer-facing teams globally.\nPrepared presentations, demo flows, and collaterals for product releases, executive reviews, and industry events.",
+      "id": "dates-de19a0190192",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Apr 2025 -- Present"
+    },
+    {
+      "category": "roles",
+      "confidence": "high",
+      "evidence_text": "Cadence Design Systems Apr 2025 -- Present\nLead Technical Marketing Engineer | Semiconductor Software\nOwned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and\ncustomer-facing teams globally.\nPrepared presentations, demo flows, and collaterals for product releases, executive reviews, and industry events.",
+      "id": "roles-9cab90bbd7e8",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Lead Technical Marketing Engineer | Semiconductor Software"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "Cadence Design Systems Apr 2025 -- Present\nLead Technical Marketing Engineer | Semiconductor Software\nOwned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and\ncustomer-facing teams globally.\nPrepared presentations, demo flows, and collaterals for product releases, executive reviews, and industry events.",
+      "id": "metrics-0636cb1759e6",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "40+ product lines"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "Cadence Design Systems Apr 2025 -- Present\nLead Technical Marketing Engineer | Semiconductor Software\nOwned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and\ncustomer-facing teams globally.\nPrepared presentations, demo flows, and collaterals for product releases, executive reviews, and industry events.",
+      "id": "metrics-a29e4530f7c3",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "40+"
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Owned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and",
+      "id": "achievements-42d4081e3539",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Owned messaging and positioning across 40+ product lines. Translated complex EDA products into clear narratives for sales and"
+    },
+    {
+      "category": "work_experience",
+      "confidence": "high",
+      "evidence_text": "Regenesys Education Aug 2024 -- Mar 2025\nGrowth Product Manager | P&L and Product Strategy\nOwned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics\nto guide intake planning, pricing, and campaign decisions.\nBuilt ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "work-experience-bb332a83e82d",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Regenesys Education (Aug 2024 -- Mar 2025) \u2014 Growth Product Manager | P&L and Product Strategy"
+    },
+    {
+      "category": "organizations",
+      "confidence": "high",
+      "evidence_text": "Regenesys Education Aug 2024 -- Mar 2025\nGrowth Product Manager | P&L and Product Strategy\nOwned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics\nto guide intake planning, pricing, and campaign decisions.\nBuilt ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "organizations-0d4230c53865",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Regenesys Education"
+    },
+    {
+      "category": "dates",
+      "confidence": "high",
+      "evidence_text": "Regenesys Education Aug 2024 -- Mar 2025\nGrowth Product Manager | P&L and Product Strategy\nOwned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics\nto guide intake planning, pricing, and campaign decisions.\nBuilt ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "dates-ceb9290a98b9",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Aug 2024 -- Mar 2025"
+    },
+    {
+      "category": "roles",
+      "confidence": "high",
+      "evidence_text": "Regenesys Education Aug 2024 -- Mar 2025\nGrowth Product Manager | P&L and Product Strategy\nOwned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics\nto guide intake planning, pricing, and campaign decisions.\nBuilt ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "roles-e9eaecd19cc6",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Growth Product Manager | P&L and Product Strategy"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "Regenesys Education Aug 2024 -- Mar 2025\nGrowth Product Manager | P&L and Product Strategy\nOwned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics\nto guide intake planning, pricing, and campaign decisions.\nBuilt ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "metrics-1673f173928c",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "5+"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "Regenesys Education Aug 2024 -- Mar 2025\nGrowth Product Manager | P&L and Product Strategy\nOwned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics\nto guide intake planning, pricing, and campaign decisions.\nBuilt ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "metrics-c574399558b7",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "CPL"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "Regenesys Education Aug 2024 -- Mar 2025\nGrowth Product Manager | P&L and Product Strategy\nOwned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics\nto guide intake planning, pricing, and campaign decisions.\nBuilt ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "metrics-207a0a7d2de1",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "ROAS"
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Owned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics",
+      "id": "achievements-7835cb48f011",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Owned P&L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics"
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Built ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both",
+      "id": "achievements-988025a57934",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Built ESG and Cloud Certification from scratch with no brief. Developed course structure, GTM approach, and sales content. Both"
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Led the on-ground rollout of FlexiPay across a 50-member sales team. Created the price-book, wrote FAQs, fielded questions on the",
+      "id": "achievements-b041b08c7a5c",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Led the on-ground rollout of FlexiPay across a 50-member sales team. Created the price-book, wrote FAQs, fielded questions on the"
+    },
+    {
+      "category": "work_experience",
+      "confidence": "high",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "id": "work-experience-3aaaffb2958d",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "PwC (Jul 2023 -- Jul 2024) \u2014 Project Management | Salesforce B2B SaaS"
+    },
+    {
+      "category": "organizations",
+      "confidence": "high",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "id": "organizations-5c08aa1342e9",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "PwC"
+    },
+    {
+      "category": "dates",
+      "confidence": "high",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "id": "dates-62a74f96fa6d",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Jul 2023 -- Jul 2024"
+    },
+    {
+      "category": "roles",
+      "confidence": "high",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "id": "roles-0546cb6dbf0c",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Project Management | Salesforce B2B SaaS"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "id": "metrics-7016b80986a7",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "0-1"
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Managed 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials",
+      "id": "achievements-ce73b66441f9",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Managed 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials"
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "Coordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "id": "achievements-f48a19d8b31e",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Coordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close."
+    },
+    {
+      "category": "work_experience",
+      "confidence": "high",
+      "evidence_text": "Synopsys Jun 2017 -- Jun 2021\nVerification Engineer | Semiconductor IP\n4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products\nare developed and brought to market.",
+      "id": "work-experience-a21d57432fa1",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Synopsys (Jun 2017 -- Jun 2021) \u2014 Verification Engineer | Semiconductor IP"
+    },
+    {
+      "category": "organizations",
+      "confidence": "high",
+      "evidence_text": "Synopsys Jun 2017 -- Jun 2021\nVerification Engineer | Semiconductor IP\n4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products\nare developed and brought to market.",
+      "id": "organizations-03ea400e70ee",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Synopsys"
+    },
+    {
+      "category": "dates",
+      "confidence": "high",
+      "evidence_text": "Synopsys Jun 2017 -- Jun 2021\nVerification Engineer | Semiconductor IP\n4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products\nare developed and brought to market.",
+      "id": "dates-c448589a52b7",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Jun 2017 -- Jun 2021"
+    },
+    {
+      "category": "roles",
+      "confidence": "high",
+      "evidence_text": "Synopsys Jun 2017 -- Jun 2021\nVerification Engineer | Semiconductor IP\n4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products\nare developed and brought to market.",
+      "id": "roles-43ada1e9154c",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "Verification Engineer | Semiconductor IP"
+    },
+    {
+      "category": "metrics",
+      "confidence": "medium",
+      "evidence_text": "Synopsys Jun 2017 -- Jun 2021\nVerification Engineer | Semiconductor IP\n4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products\nare developed and brought to market.",
+      "id": "metrics-953d372b1539",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "4 years"
+    },
+    {
+      "category": "achievements",
+      "confidence": "high",
+      "evidence_text": "4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products",
+      "id": "achievements-093591ae080d",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Experience",
+      "value": "4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products"
+    },
+    {
+      "category": "education",
+      "confidence": "high",
+      "evidence_text": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
+      "id": "education-baff549f702d",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Education",
+      "value": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy"
+    },
+    {
+      "category": "dates",
+      "confidence": "medium",
+      "evidence_text": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
+      "id": "dates-c91cf2a15248",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Education",
+      "value": "2021 -- 2023"
+    },
+    {
+      "category": "organizations",
+      "confidence": "medium",
+      "evidence_text": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
+      "id": "organizations-9f2dfcfca417",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Education",
+      "value": "BITSoM (BITS Pilani School of Management), Mumbai"
+    },
+    {
+      "category": "education",
+      "confidence": "high",
+      "evidence_text": "Jamia Millia Islamia, New Delhi 2013 -- 2017\nB.Tech, Electronics and Communication | Certified Scrum Manager, Scrum Alliance",
+      "id": "education-948e1a14ea51",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Education",
+      "value": "Jamia Millia Islamia, New Delhi 2013 -- 2017\nB.Tech, Electronics and Communication | Certified Scrum Manager, Scrum Alliance"
+    },
+    {
+      "category": "dates",
+      "confidence": "medium",
+      "evidence_text": "Jamia Millia Islamia, New Delhi 2013 -- 2017\nB.Tech, Electronics and Communication | Certified Scrum Manager, Scrum Alliance",
+      "id": "dates-2feeb46e7c9e",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Education",
+      "value": "2013 -- 2017"
+    },
+    {
+      "category": "organizations",
+      "confidence": "medium",
+      "evidence_text": "Jamia Millia Islamia, New Delhi 2013 -- 2017\nB.Tech, Electronics and Communication | Certified Scrum Manager, Scrum Alliance",
+      "id": "organizations-923c6b972862",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Education",
+      "value": "Jamia Millia Islamia, New Delhi"
+    },
+    {
+      "category": "skills",
+      "confidence": "high",
+      "evidence_text": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution",
+      "id": "skills-3794872e4157",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution",
+      "id": "domains-679d947d2a3e",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "P&L management"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution",
+      "id": "domains-4acd0b6f64ca",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "funnel analysis (CPL"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution",
+      "id": "domains-eff8c43cfad0",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "ROAS)"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution",
+      "id": "domains-8353f15089f3",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "unit economics"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution",
+      "id": "domains-8b2de5d79839",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "GTM planning"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution",
+      "id": "domains-2f91f14d6365",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "campaign execution"
+    },
+    {
+      "category": "skills",
+      "confidence": "high",
+      "evidence_text": "Product: 0-1 launches, roadmap planning, cross-functional execution, stakeholder management",
+      "id": "skills-24103ecd3134",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "Product: 0-1 launches, roadmap planning, cross-functional execution, stakeholder management"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Product: 0-1 launches, roadmap planning, cross-functional execution, stakeholder management",
+      "id": "domains-4992359d584f",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "0-1 launches"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Product: 0-1 launches, roadmap planning, cross-functional execution, stakeholder management",
+      "id": "domains-a966770597eb",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "roadmap planning"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Product: 0-1 launches, roadmap planning, cross-functional execution, stakeholder management",
+      "id": "domains-9543ac580df3",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "cross-functional execution"
+    },
+    {
+      "category": "domains",
+      "confidence": "medium",
+      "evidence_text": "Product: 0-1 launches, roadmap planning, cross-functional execution, stakeholder management",
+      "id": "domains-45e6e0724ff8",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "stakeholder management"
+    },
+    {
+      "category": "skills",
+      "confidence": "high",
+      "evidence_text": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines",
+      "id": "skills-e587dcd2e4b5",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines"
+    },
+    {
+      "category": "tools",
+      "confidence": "medium",
+      "evidence_text": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines",
+      "id": "tools-a111eb0f838f",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "Claude API"
+    },
+    {
+      "category": "tools",
+      "confidence": "medium",
+      "evidence_text": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines",
+      "id": "tools-5ba2d900d09d",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "Phi-3 Mini fine-tuning"
+    },
+    {
+      "category": "tools",
+      "confidence": "medium",
+      "evidence_text": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines",
+      "id": "tools-94a526baedc6",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "Redis Streams"
+    },
+    {
+      "category": "tools",
+      "confidence": "medium",
+      "evidence_text": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines",
+      "id": "tools-7ca8457fe111",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "FastAPI"
+    },
+    {
+      "category": "tools",
+      "confidence": "medium",
+      "evidence_text": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines",
+      "id": "tools-70ce592ac1ec",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "Python"
+    },
+    {
+      "category": "tools",
+      "confidence": "medium",
+      "evidence_text": "AI and Technical: Claude API, Phi-3 Mini fine-tuning, Redis Streams, FastAPI, Python, agentic pipelines",
+      "id": "tools-79bedbf98e80",
+      "source_resume": "resumes/ps.md",
+      "source_section": "Skills",
+      "value": "agentic pipelines"
+    }
+  ],
+  "schema_version": 1,
+  "source_resume": "resumes/ps.md",
+  "source_title": "Rahul Shiv Shankar \u2014 Resume: ps",
+  "warnings": []
+}

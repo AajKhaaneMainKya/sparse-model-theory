@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -96,11 +97,91 @@ class AdminResumeUploadTests(unittest.TestCase):
         self.assertEqual(response["character_count"], len("Product lead and AI systems builder"))
         saved = self.public_root / "resumes" / "product-lead.md"
         self.assertTrue(saved.exists())
+        self.assertEqual(response["facts_source"], "resumes/_facts/product-lead.json")
+        self.assertTrue((self.public_root / "resumes" / "_facts" / "product-lead.json").exists())
+        self.assertGreaterEqual(response["fact_count"], 1)
+        self.assertIn("warnings", response)
         text = saved.read_text(encoding="utf-8")
         self.assertIn("# Rahul Shiv Shankar \u2014 Resume: product-lead", text)
         self.assertIn("Source: uploaded resume", text)
         self.assertIn("Original filename: resume.txt", text)
         self.assertIn("Product lead and AI systems builder", text)
+
+    def test_upload_creates_structured_resume_fact_contract(self):
+        resume_text = (
+            "Rahul Shiv Shankar\n"
+            "rshivs.1295@gmail.com | linkedin.com/in/rshivs | Mumbai, India\n\n"
+            "Summary\n"
+            "6+ years across deep-tech, edtech, and consulting.\n\n"
+            "AI Projects and Community\n"
+            "• Akshar -- Agentic content writer with 7-stage pipeline featured in GrowthX newsletter.\n"
+            "• Hosted Hermes Buildathon with 100+ participants.\n\n"
+            "Work Experience\n"
+            "Regenesys Education Aug 2024 -- Mar 2025\n"
+            "Growth Product Manager | P&L and Product Strategy\n"
+            "• Owned P&L and GTM across 5+ live educational programs.\n\n"
+            "Education\n"
+            "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\n"
+            "MBA, Leadership and Strategy\n"
+            "Jamia Millia Islamia, New Delhi 2013 -- 2017\n"
+            "B.Tech, Electronics and Communication\n\n"
+            "Skills\n"
+            "Growth and GTM: P&L management, funnel analysis, GTM planning\n"
+            "AI and Technical: Claude API, Redis Streams, FastAPI, Python, agentic pipelines\n"
+        )
+        with mock.patch.object(public_portfolio, "PUBLIC_CORPUS_DIR", self.public_root), \
+                mock.patch.dict("os.environ", {}, clear=True):
+            response = asyncio.run(
+                server.admin_resume_upload(
+                    multipart_request(
+                        filename="rahul-v1.txt",
+                        content=resume_text.encode("utf-8"),
+                        content_type="text/plain",
+                        label="Rahul V1",
+                    )
+                )
+            )
+
+        facts_path = self.public_root / response["facts_source"]
+        payload = json.loads(facts_path.read_text(encoding="utf-8"))
+        self.assertEqual(payload["schema_version"], 1)
+        self.assertEqual(payload["source_resume"], "resumes/rahul-v1.md")
+        categories = {fact["category"] for fact in payload["facts"]}
+        expected = {
+            "identity",
+            "contact",
+            "location",
+            "links",
+            "summary",
+            "education",
+            "work_experience",
+            "projects",
+            "skills",
+            "tools",
+            "domains",
+            "achievements",
+            "metrics",
+            "communities",
+            "dates",
+            "roles",
+            "organizations",
+        }
+        self.assertTrue(expected.issubset(categories))
+        for fact in payload["facts"]:
+            self.assertEqual(
+                set(fact),
+                {"id", "category", "value", "source_resume", "source_section", "evidence_text", "confidence"},
+            )
+            self.assertIn(fact["confidence"], {"high", "medium", "low"})
+            self.assertEqual(fact["source_resume"], "resumes/rahul-v1.md")
+        values = "\n".join(fact["value"] for fact in payload["facts"])
+        self.assertIn("BITSoM", values)
+        self.assertIn("Jamia Millia Islamia", values)
+        self.assertIn("Regenesys Education", values)
+        self.assertIn("Growth Product Manager", values)
+        self.assertIn("Akshar", values)
+        self.assertIn("FastAPI", values)
+        self.assertIn("100+ participants", values)
 
     def test_upload_md_resume(self):
         with mock.patch.object(public_portfolio, "PUBLIC_CORPUS_DIR", self.public_root), \
@@ -191,6 +272,24 @@ class AdminResumeUploadTests(unittest.TestCase):
         self.assertEqual(result["source"], "resumes/product-lead-20260824-093005.md")
         self.assertEqual((existing_dir / "product-lead.md").read_text(encoding="utf-8"), "original")
         self.assertTrue((existing_dir / "product-lead-20260824-093005.md").exists())
+
+    def test_temp_or_test_resume_label_is_rejected(self):
+        with mock.patch.object(public_portfolio, "PUBLIC_CORPUS_DIR", self.public_root), \
+                mock.patch.dict("os.environ", {}, clear=True):
+            with self.assertRaises(HTTPException) as raised:
+                asyncio.run(
+                    server.admin_resume_upload(
+                        multipart_request(
+                            filename="section-retrieval-test.txt",
+                            content=b"Rahul completed his MBA at Regenesys Business School.",
+                            content_type="text/plain",
+                            label="section-retrieval-test",
+                        )
+                    )
+                )
+
+        self.assertEqual(raised.exception.status_code, 400)
+        self.assertFalse((self.public_root / "resumes").exists())
 
     def test_wrong_admin_token_fails_when_configured(self):
         with mock.patch.object(public_portfolio, "PUBLIC_CORPUS_DIR", self.public_root), \

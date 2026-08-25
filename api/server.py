@@ -6,6 +6,7 @@ import difflib
 from email.parser import BytesParser
 from email.policy import default
 from io import BytesIO
+import json
 import logging
 import os
 from pathlib import Path
@@ -315,6 +316,8 @@ def save_resume_to_public_corpus(upload: ResumeUpload, now: datetime | None = No
     timestamp = resolved_now.isoformat(timespec="seconds")
     raw_label = upload.label or Path(upload.filename).stem
     label = sanitize_resume_label(raw_label) or default_resume_label(resolved_now)
+    if public_portfolio.is_contaminated_resume_name(f"{label}.md"):
+        raise HTTPException(status_code=400, detail="resume label is reserved for test or temporary artifacts")
     resumes_dir = public_portfolio.PUBLIC_CORPUS_DIR / "resumes"
     resumes_dir.mkdir(parents=True, exist_ok=True)
     final_label, path = _unique_resume_path(resumes_dir, label, resolved_now)
@@ -326,11 +329,24 @@ def save_resume_to_public_corpus(upload: ResumeUpload, now: datetime | None = No
         f"{public_portfolio.normalize_public_text(upload.text)}\n"
     )
     path.write_text(content, encoding="utf-8")
+    facts_dir = resumes_dir / public_portfolio.RESUME_FACTS_DIRNAME
+    facts_dir.mkdir(parents=True, exist_ok=True)
+    facts_path = facts_dir / f"{final_label}.json"
+    facts_payload = public_portfolio.build_resume_fact_artifact(
+        source_resume=str(path.relative_to(public_portfolio.PUBLIC_CORPUS_DIR)),
+        source_title=f"Rahul Shiv Shankar — Resume: {final_label}",
+        markdown_text=content,
+    )
+    facts_path.write_text(json.dumps(facts_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {
         "success": True,
         "label": final_label,
         "source": str(path.relative_to(public_portfolio.PUBLIC_CORPUS_DIR)),
+        "facts_source": str(facts_path.relative_to(public_portfolio.PUBLIC_CORPUS_DIR)),
         "path": str(path),
+        "facts_path": str(facts_path),
+        "fact_count": len(facts_payload["facts"]),
+        "warnings": facts_payload["warnings"],
         "character_count": len(upload.text.strip()),
     }
 
@@ -384,6 +400,9 @@ async def admin_resume_upload(request: Request) -> dict[str, object]:
         "success": True,
         "label": result["label"],
         "source": result["source"],
+        "facts_source": result["facts_source"],
+        "fact_count": result["fact_count"],
+        "warnings": result["warnings"],
         "character_count": result["character_count"],
     }
 
