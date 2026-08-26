@@ -399,7 +399,7 @@
     {
       "category": "work_experience",
       "confidence": "high",
-      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nKept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.",
       "id": "work-experience-3aaaffb2958d",
       "source_resume": "resumes/ps.md",
       "source_section": "Experience",
@@ -408,7 +408,7 @@
     {
       "category": "organizations",
       "confidence": "high",
-      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nKept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.",
       "id": "organizations-5c08aa1342e9",
       "source_resume": "resumes/ps.md",
       "source_section": "Experience",
@@ -417,7 +417,7 @@
     {
       "category": "dates",
       "confidence": "high",
-      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nKept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.",
       "id": "dates-62a74f96fa6d",
       "source_resume": "resumes/ps.md",
       "source_section": "Experience",
@@ -426,7 +426,7 @@
     {
       "category": "roles",
       "confidence": "high",
-      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nKept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.",
       "id": "roles-0546cb6dbf0c",
       "source_resume": "resumes/ps.md",
       "source_section": "Experience",
@@ -435,7 +435,7 @@
     {
       "category": "metrics",
       "confidence": "medium",
-      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nManaged 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials\nincluding resource costs, billing, and margins, and reported margin health to leadership.\nCoordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
+      "evidence_text": "PwC Jul 2023 -- Jul 2024\nProject Management | Salesforce B2B SaaS\nKept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.",
       "id": "metrics-7016b80986a7",
       "source_resume": "resumes/ps.md",
       "source_section": "Experience",
@@ -444,20 +444,11 @@
     {
       "category": "achievements",
       "confidence": "high",
-      "evidence_text": "Managed 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials",
+      "evidence_text": "Kept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.",
       "id": "achievements-ce73b66441f9",
       "source_resume": "resumes/ps.md",
       "source_section": "Experience",
-      "value": "Managed 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials"
-    },
-    {
-      "category": "achievements",
-      "confidence": "high",
-      "evidence_text": "Coordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.",
-      "id": "achievements-f48a19d8b31e",
-      "source_resume": "resumes/ps.md",
-      "source_section": "Experience",
-      "value": "Coordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close."
+      "value": "Kept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving."
     },
     {
       "category": "work_experience",
@@ -516,16 +507,16 @@
     {
       "category": "education",
       "confidence": "high",
-      "evidence_text": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
+      "evidence_text": "BITSoM (BITS School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
       "id": "education-baff549f702d",
       "source_resume": "resumes/ps.md",
       "source_section": "Education",
-      "value": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy"
+      "value": "BITSoM (BITS School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy"
     },
     {
       "category": "dates",
       "confidence": "medium",
-      "evidence_text": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
+      "evidence_text": "BITSoM (BITS School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
       "id": "dates-c91cf2a15248",
       "source_resume": "resumes/ps.md",
       "source_section": "Education",
@@ -534,11 +525,11 @@
     {
       "category": "organizations",
       "confidence": "medium",
-      "evidence_text": "BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
+      "evidence_text": "BITSoM (BITS School of Management), Mumbai 2021 -- 2023\nMBA, Leadership and Strategy",
       "id": "organizations-9f2dfcfca417",
       "source_resume": "resumes/ps.md",
       "source_section": "Education",
-      "value": "BITSoM (BITS Pilani School of Management), Mumbai"
+      "value": "BITSoM (BITS School of Management), Mumbai"
     },
     {
       "category": "education",

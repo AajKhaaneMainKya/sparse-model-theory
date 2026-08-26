@@ -67,6 +67,7 @@ app.add_middleware(
 )
 app.mount("/static", StaticFiles(directory=UI_DIR), name="static")
 app.mount("/portfolio-static", StaticFiles(directory=PUBLIC_UI_DIR), name="portfolio-static")
+app.mount("/assets", StaticFiles(directory=PUBLIC_UI_DIR / "assets"), name="public-assets")
 app.mount("/admin-static", StaticFiles(directory=ADMIN_UI_DIR), name="admin-static")
 
 

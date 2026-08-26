@@ -9,6 +9,8 @@ const THEME_KEY = "rahul-theme";
 const themeToggle = document.querySelector("[data-theme-toggle]");
 const themeIcon = document.querySelector("[data-theme-icon]");
 const softContact = document.querySelector("[data-soft-contact]");
+const navMenu = document.querySelector("[data-nav-menu]");
+const navLinks = document.querySelector("[data-nav-links]");
 
 function apiPath(path) {
   return path;
@@ -23,7 +25,7 @@ function preferredTheme() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem(THEME_KEY, theme);
-  if (themeIcon) themeIcon.textContent = theme === "dark" ? "☾" : "☼";
+  if (themeIcon) themeIcon.textContent = theme === "dark" ? "Dark" : "Light";
 }
 
 function currentPath() {
@@ -34,6 +36,11 @@ function pageForPath(path) {
   if (path === "/thinking-window") return "thinking";
   if (path === "/contact") return "contact";
   return "portfolio";
+}
+
+function closeMobileNav() {
+  document.body.classList.remove("nav-open");
+  navMenu?.setAttribute("aria-expanded", "false");
 }
 
 function renderRoute() {
@@ -52,6 +59,8 @@ function renderRoute() {
   if (window.location.pathname !== path) {
     window.history.replaceState({}, "", path);
   }
+
+  closeMobileNav();
 }
 
 function go(path) {
@@ -63,7 +72,7 @@ function go(path) {
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error("That did not go through. Try a shorter note or a valid email.");
+    throw new Error(data.detail || "That did not go through. Try a shorter note or a valid email.");
   }
   return data;
 }
@@ -118,8 +127,9 @@ function setSurfaceLoading(surface, question) {
   output.dataset.state = "loading";
   label.textContent = question;
   status.textContent = "Reading public evidence";
-  answer.textContent = "";
+  answer.textContent = "Building a grounded answer...";
   evidence.innerHTML = "";
+  output.scrollIntoView({block: "nearest", behavior: "smooth"});
 }
 
 function renderEvidence(surface, items, label = "Evidence trail") {
@@ -160,7 +170,7 @@ function renderAnswer(surface, question, data) {
   output.dataset.state = "ready";
   label.textContent = question;
   status.textContent = data.status === "blocked" ? "Blocked" : statusText(evidenceItems.length);
-  answer.textContent = data.answer || "";
+  answer.textContent = data.answer || "No answer returned.";
   renderEvidence(surface, evidenceItems, data.mode === "thinking_window" ? "Grounding" : "Evidence trail");
 }
 
@@ -247,6 +257,26 @@ for (const link of document.querySelectorAll("[data-route]")) {
   });
 }
 
+// Persistent-header links that point at a section inside the home page
+// (Proof, Ask Rahul CTA). A bare `#id` href only works while already on
+// "/" — from any other route it just appends the hash to the current
+// path, and the target (nested inside the home-only [data-page]
+// wrapper) is hidden, so the click silently does nothing. This routes
+// home first (a no-op if already there, since go()/renderRoute() are
+// synchronous) and then scrolls to the now-visible target.
+for (const link of document.querySelectorAll("[data-anchor]")) {
+  link.addEventListener("click", event => {
+    event.preventDefault();
+    if (currentPath() !== "/") go("/");
+    document.getElementById(link.dataset.anchor)?.scrollIntoView({behavior: "smooth", block: "start"});
+    closeMobileNav();
+  });
+}
+
+for (const link of document.querySelectorAll('a[href^="#"]')) {
+  link.addEventListener("click", () => closeMobileNav());
+}
+
 for (const form of document.querySelectorAll("[data-ask-form]")) {
   form.addEventListener("submit", event => {
     event.preventDefault();
@@ -285,7 +315,7 @@ for (const form of document.querySelectorAll("[data-inline-contact-form]")) {
 for (const portrait of document.querySelectorAll("[data-portrait]")) {
   portrait.addEventListener("error", () => {
     portrait.hidden = true;
-    portrait.closest(".portrait-wrap")?.classList.add("portrait-missing");
+    portrait.closest(".portrait-chip")?.classList.add("portrait-missing");
   });
 }
 
@@ -293,6 +323,27 @@ if (themeToggle) {
   themeToggle.addEventListener("click", () => {
     applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
   });
+}
+
+if (navMenu && navLinks) {
+  navMenu.addEventListener("click", () => {
+    const open = !document.body.classList.contains("nav-open");
+    document.body.classList.toggle("nav-open", open);
+    navMenu.setAttribute("aria-expanded", String(open));
+  });
+}
+
+const observer = "IntersectionObserver" in window
+  ? new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) entry.target.classList.add("is-visible");
+      }
+    }, {threshold: 0.12})
+  : null;
+
+for (const item of document.querySelectorAll(".reveal")) {
+  if (observer) observer.observe(item);
+  else item.classList.add("is-visible");
 }
 
 window.addEventListener("popstate", renderRoute);

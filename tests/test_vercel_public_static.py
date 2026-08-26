@@ -36,6 +36,9 @@ class VercelPublicStaticTests(unittest.TestCase):
                 "assets/ask-rahul-og.svg",
                 "assets/favicon.svg",
                 "assets/rahul.jpg",
+                "assets/rahul-96.jpg",
+                "assets/rahul-192.jpg",
+                "assets/rahul-480.jpg",
                 "assets/rahul.jpg.README.md",
                 "app.js",
                 "index.html",
@@ -152,6 +155,50 @@ class VercelPublicStaticTests(unittest.TestCase):
         thinking_output_index = html.index("data-ask-output", thinking_index)
         soft_contact_index = html.index("data-soft-contact", thinking_index)
         self.assertLess(thinking_output_index, soft_contact_index)
+
+    def test_public_product_surfaces_are_present(self):
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn("data-hero-product-surface", html)
+        self.assertIn("Ask input", html)
+        self.assertIn("hero-ask-card", html)
+        self.assertIn("ask-form", html)
+        self.assertNotIn("Sample answer", html)
+        self.assertIn("Evidence nodes", html)
+        self.assertIn("Thinking Window", html)
+        self.assertIn('data-evidence-visual', html)
+        self.assertIn("Resume facts", html)
+        self.assertIn("Projects", html)
+        self.assertIn("Education", html)
+        self.assertIn("Work history", html)
+        self.assertIn("Skills", html)
+        self.assertIn("Citations", html)
+
+    def test_contact_form_and_loop_are_present(self):
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn('data-contact-form', html)
+        self.assertIn('name="name"', html)
+        self.assertIn('name="email"', html)
+        self.assertIn('name="phone"', html)
+        self.assertIn('name="context_type"', html)
+        self.assertIn('name="message"', html)
+        self.assertIn("Request captured", html)
+        self.assertIn("Notification sent", html)
+        self.assertIn("Rahul follows up", html)
+
+    def test_navigation_stays_public_and_responsive(self):
+        html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
+
+        nav = html.split("<nav", 1)[1].split("</nav>", 1)[0]
+        self.assertIn("Portfolio", nav)
+        self.assertIn("Thinking Window", nav)
+        self.assertIn("Proof", nav)
+        self.assertIn("Contact", nav)
+        self.assertNotIn("/admin", nav)
+        self.assertNotIn("/console", nav)
+        self.assertIn("data-nav-menu", html)
+        self.assertIn("data-theme-toggle", html)
 
     def test_photo_references_existing_asset_and_has_fallback(self):
         html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")

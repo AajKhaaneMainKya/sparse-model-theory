@@ -45,16 +45,13 @@ new commission model, fixed pitches where mis-selling was happening, and worked 
 how programs and FlexiPay were positioned and sold on the floor.
 PwC Jul 2023 -- Jul 2024
 Project Management | Salesforce B2B SaaS
-• Managed 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials 
-including resource costs, billing, and margins, and reported margin health to leadership.
-• Coordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.
-• When projects got critical, went on-site to the client and worked directly with all stakeholders to get everyone to a common solution.
+• Kept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.
 Synopsys Jun 2017 -- Jun 2021
 Verification Engineer | Semiconductor IP
 • 4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products 
 are developed and brought to market.
 EDUCATION
-BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023
+BITSoM (BITS School of Management), Mumbai 2021 -- 2023
 MBA, Leadership and Strategy
 Jamia Millia Islamia, New Delhi 2013 -- 2017
 B.Tech, Electronics and Communication  |  Certified Scrum Manager, Scrum Alliance

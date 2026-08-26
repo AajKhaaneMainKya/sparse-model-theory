@@ -9,7 +9,7 @@ rshivs.1295@gmail.com  |  +91 8766281386  |  linkedin.com/in/rshivs  |  Mumbai, 
 6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and 
 Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants, 
 mentoring teams on revenue and virality. At Regenesys led product launches, P&L, and GTM execution. At PwC project managed 
-enterprise CRM deployments for leading NBFCs. Work best where ownership is real and execution is what moves the needle.
+enterprise CRM deployments for leading BFSI clients. Work best where ownership is real and execution is what moves the needle.
 AI PROJECTS AND COMMUNITY
 • Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches 
 your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and 
@@ -45,16 +45,13 @@ new commission model, fixed pitches where mis-selling was happening, and worked 
 how programs and FlexiPay were positioned and sold on the floor.
 PwC Jul 2023 -- Jul 2024
 Project Management | Salesforce B2B SaaS
-• Managed 0-1 CRM implementations for leading BFSI clients end to end -- requirements, scope, milestones, timelines, project financials 
-including resource costs, billing, and margins, and reported margin health to leadership.
-• Coordinated resource allocation during peak project phases and managed performance ratings for all resources at engagement close.
-• When projects got critical, went on-site to the client and worked directly with all stakeholders to get everyone to a common solution.
+• Kept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.
 Synopsys Jun 2017 -- Jun 2021
 Verification Engineer | Semiconductor IP
 • 4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products 
 are developed and brought to market.
 EDUCATION
-BITSoM (BITS Pilani School of Management), Mumbai 2021 -- 2023
+BITSoM (BITS School of Management), Mumbai 2021 -- 2023
 MBA, Leadership and Strategy
 Jamia Millia Islamia, New Delhi 2013 -- 2017
 B.Tech, Electronics and Communication  |  Certified Scrum Manager, Scrum Alliance

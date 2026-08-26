@@ -159,7 +159,7 @@ class PublicPortfolioRetrievalTests(unittest.TestCase):
 
         answer = response["answer"]
         self.assertIn("BITSoM", answer)
-        self.assertIn("BITS Pilani School of Management", answer)
+        self.assertIn("BITS School of Management", answer)
         self.assertIn("MBA, Leadership and Strategy", answer)
         self.assertIn("Jamia Millia Islamia", answer)
         self.assertIn("B.Tech", answer)
