@@ -13,6 +13,7 @@ import logging
 import os
 from pathlib import Path
 import re
+import threading
 import time
 from typing import Literal
 from urllib import request as urlrequest
@@ -682,8 +683,110 @@ def console() -> FileResponse:
     return FileResponse(UI_DIR / "index.html")
 
 
+# ---------- Public ask-endpoint rate limiting ----------
+# Cost/abuse control for /ask-rahul and /thinking-window: both endpoints can
+# trigger a real LLM call, so they share one budget rather than each getting
+# an independent N/hour -- otherwise a caller could just alternate between
+# the two forms to double their effective quota.
+#
+# This is an in-memory, per-process counter: no Redis or external store,
+# since Railway runs this as a single instance. That is a deliberate
+# tradeoff, not an oversight -- a deploy or restart clears every counter,
+# so a determined abuser could reset their own limit by forcing/waiting out
+# a restart. For a personal-portfolio cost guard (not a security boundary)
+# that's acceptable; if this ever runs multi-instance, this needs to move
+# to a shared store (e.g. Redis) or the per-IP limit becomes N-per-instance
+# instead of N-per-deployment.
+_RATE_LIMIT_WINDOW_SECONDS = 60 * 60  # 1 hour
+_RATE_LIMIT_PER_IP = int(os.environ.get("PUBLIC_ASK_RATE_LIMIT_PER_IP", "3"))
+_RATE_LIMIT_GLOBAL_DAILY = int(os.environ.get("PUBLIC_ASK_RATE_LIMIT_GLOBAL_DAILY", "200"))
+
+RATE_LIMIT_MESSAGE = (
+    "You've reached the question limit for now. Reach out directly via the Contact page "
+    "and Rahul will follow up."
+)
+
+_rate_limit_lock = threading.Lock()
+_rate_limit_per_ip_buckets: dict[str, list[float]] = {}
+_rate_limit_global_bucket: list[float] = []
+
+
+def _client_ip(request: Request) -> str:
+    # Trust only the RIGHT-most X-Forwarded-For segment -- never the first.
+    # This request passes through at least one trusted hop before reaching
+    # this app (Vercel's rewrite, then Railway's edge proxy), and each
+    # legitimate hop APPENDS its observed peer address to the header
+    # rather than replacing it. A client is free to set their own
+    # X-Forwarded-For value, which then lands at the LEFT of whatever a
+    # real proxy appends after it -- so trusting the first entry (the
+    # original bug here) lets any caller bypass the per-IP limit just by
+    # sending a fresh fake X-Forwarded-For on every request. Confirmed
+    # against Railway's own guidance: "X-Forwarded-For can also be
+    # trusted, as long as the right most value is used" (they append,
+    # they don't strip/replace, and a client-set value is not discarded).
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        parts = [part.strip() for part in forwarded.split(",") if part.strip()]
+        if parts:
+            return parts[-1]
+    return request.client.host if request.client else "unknown"
+
+
+def _prune(timestamps: list[float], window_seconds: float, now: float) -> list[float]:
+    cutoff = now - window_seconds
+    return [t for t in timestamps if t > cutoff]
+
+
+def _enforce_rate_limit(endpoint: str, http_request: Request | None) -> None:
+    # http_request is only None when a caller invokes the endpoint function
+    # directly in-process (the test suite does this, bypassing FastAPI's
+    # request injection) rather than over real HTTP -- there is no client
+    # to attribute a hit to, and no cost/abuse surface from an in-process
+    # call, so it's exempt rather than being lumped into a shared
+    # "unknown" bucket (which would make unrelated tests fail depending on
+    # how many other direct calls already ran in the same process).
+    if http_request is None:
+        return
+    now = time.time()
+    ip = _client_ip(http_request)
+
+    with _rate_limit_lock:
+        per_ip = _prune(_rate_limit_per_ip_buckets.get(ip, []), _RATE_LIMIT_WINDOW_SECONDS, now)
+        daily = _prune(_rate_limit_global_bucket, 24 * 60 * 60, now)
+
+        if len(per_ip) >= _RATE_LIMIT_PER_IP:
+            if per_ip:
+                _rate_limit_per_ip_buckets[ip] = per_ip
+            else:
+                _rate_limit_per_ip_buckets.pop(ip, None)
+            _rate_limit_global_bucket[:] = daily
+            logger.warning(
+                "rate_limit_hit scope=per_ip endpoint=%s ip=%s limit=%s window_s=%s",
+                endpoint, ip, _RATE_LIMIT_PER_IP, _RATE_LIMIT_WINDOW_SECONDS,
+            )
+            raise HTTPException(status_code=429, detail=RATE_LIMIT_MESSAGE)
+
+        if len(daily) >= _RATE_LIMIT_GLOBAL_DAILY:
+            if per_ip:
+                _rate_limit_per_ip_buckets[ip] = per_ip
+            else:
+                _rate_limit_per_ip_buckets.pop(ip, None)
+            _rate_limit_global_bucket[:] = daily
+            logger.warning(
+                "rate_limit_hit scope=global_daily endpoint=%s ip=%s limit=%s",
+                endpoint, ip, _RATE_LIMIT_GLOBAL_DAILY,
+            )
+            raise HTTPException(status_code=429, detail=RATE_LIMIT_MESSAGE)
+
+        per_ip.append(now)
+        daily.append(now)
+        _rate_limit_per_ip_buckets[ip] = per_ip
+        _rate_limit_global_bucket[:] = daily
+
+
 @app.post("/ask-rahul")
-def ask_rahul_endpoint(request: AskRahulRequest) -> dict[str, object]:
+def ask_rahul_endpoint(request: AskRahulRequest, http_request: Request = None) -> dict[str, object]:
+    _enforce_rate_limit("ask-rahul", http_request)
     question = _clean_public_text(request.question, max_chars=1200) or ""
     result = ask_rahul(question.strip())
     evidence = result.get("evidence")
@@ -703,7 +806,8 @@ def ask_rahul_endpoint(request: AskRahulRequest) -> dict[str, object]:
 
 
 @app.post("/thinking-window")
-def thinking_window_endpoint(request: ThinkingWindowRequest) -> dict[str, object]:
+def thinking_window_endpoint(request: ThinkingWindowRequest, http_request: Request = None) -> dict[str, object]:
+    _enforce_rate_limit("thinking-window", http_request)
     question = _clean_public_text(request.question, max_chars=1600) or ""
     result = thinking_window(question.strip())
     grounding = result.get("grounding")
