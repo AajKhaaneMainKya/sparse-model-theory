@@ -159,6 +159,409 @@ function renderEvidence(surface, items, label = "Evidence trail") {
   }
 }
 
+// ---------- Structured-answer flow diagrams ----------
+// Long answers that describe a sequence, a set of parallel states, or a
+// decision framework read as a wall of text even with good typography.
+// This detects that shape from the plain-text answer and renders it as a
+// small connected diagram (nodes + connectors) instead, reusing the site's
+// existing card/shadow tokens so it looks native. A short, unstructured
+// answer is left as plain prose — the diagram only appears when the
+// content actually has a shape worth drawing.
+
+const SEQUENCE_LEAD_WORDS = /^(first|then|next|after that|finally|second|third|lastly)\b/i;
+// A short, title-cased phrase (1-4 words), repeated 3+ times separated by
+// "/" — e.g. "Verified / Declared / Missing / Conflict detected".
+const SLASH_SEGMENT = "[A-Z][\\w-]*(?:\\s+[A-Za-z][\\w-]*){0,3}";
+const SLASH_STATE_PATTERN = new RegExp(`${SLASH_SEGMENT}(?:\\s*/\\s*${SLASH_SEGMENT}){2,}`);
+const TONE_RULES = [
+  {pattern: /\b(verified|done|complete|confirmed|shipped|passed?|ready)\b/i, tone: "tone-positive"},
+  {pattern: /\b(missing|conflict|failed?|blocked|risk|declined|error)\b/i, tone: "tone-negative"},
+  {pattern: /\b(declared|pending|unknown|tbd|in progress)\b/i, tone: "tone-neutral"},
+];
+
+function truncateLabel(text, max) {
+  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+}
+
+// "Label: rest of the sentence" / "Label — rest" -> a short node label plus
+// a longer supporting-detail sentence rendered below the diagram. Falls
+// back to a trimmed short label with no separate detail when the whole
+// item is already short, or a truncated label with the full item kept as
+// detail when it is not.
+function splitLabelDetail(raw) {
+  const item = raw.trim();
+  const sep = item.match(/^(.{2,40}?)\s*(?::|—|-)\s+(.+)$/);
+  if (sep) return {label: sep[1].trim(), detail: sep[2].trim()};
+  const words = item.split(/\s+/);
+  if (words.length <= 8) return {label: item, detail: ""};
+  return {label: truncateLabel(words.slice(0, 7).join(" "), 60), detail: item};
+}
+
+function parseAnswerStructure(rawText) {
+  const text = String(rawText || "").trim();
+  if (!text) return {type: "prose", paragraphs: []};
+
+  const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  const prose = {type: "prose", paragraphs: paragraphs.length ? paragraphs : [text]};
+
+  // Numbered/bulleted-list detection needs at least two list lines to mean
+  // anything; a one-line answer skips straight to the single-line checks
+  // below (slash-separated states, a colon-introduced list) rather than
+  // bailing out to prose before those ever run.
+  if (lines.length >= 2) {
+    const numbered = lines.map(line => line.match(/^(\d+)[.)]\s+(.+)$/)).filter(Boolean);
+    if (numbered.length >= 2 && numbered.length >= lines.length * 0.6) {
+      return {type: "sequence", nodes: numbered.map(m => splitLabelDetail(m[2]))};
+    }
+
+    // A question line followed by a run of short follow-up lines reads as
+    // a root question branching into sub-considerations. Checked before
+    // the generic bulleted-list detector below: the sub-considerations
+    // are very often themselves bulleted, which would otherwise make this
+    // shape get swallowed into a flat category list with the question
+    // discarded.
+    const qIndex = lines.findIndex(line => line.endsWith("?"));
+    if (qIndex !== -1) {
+      const rest = lines.slice(qIndex + 1);
+      const children = rest.filter(line => /^[-*•]/.test(line) || line.length < 90).slice(0, 6);
+      if (children.length >= 2) {
+        return {
+          type: "tree",
+          root: splitLabelDetail(lines[qIndex]),
+          nodes: children.map(c => splitLabelDetail(c.replace(/^[-*•]\s+/, ""))),
+        };
+      }
+    }
+
+    const bulleted = lines.map(line => line.match(/^[-*•]\s+(.+)$/)).filter(Boolean);
+    if (bulleted.length >= 2 && bulleted.length >= lines.length * 0.6) {
+      const items = bulleted.map(m => m[1]);
+      const seqCount = items.filter(item => SEQUENCE_LEAD_WORDS.test(item)).length;
+      const type = seqCount >= Math.ceil(items.length / 2) ? "sequence" : "categories";
+      return {type, nodes: items.map(splitLabelDetail)};
+    }
+  }
+
+  // A run of short slash-separated states, e.g. "...claims: Verified /
+  // Declared / Missing / Conflict detected." — matched as a substring
+  // anywhere in the text (not the whole line), since it's usually the
+  // tail end of a lead-in sentence rather than a line of its own.
+  const slashMatch = text.match(SLASH_STATE_PATTERN);
+  if (slashMatch) {
+    const parts = slashMatch[0].split("/").map(part => part.trim()).filter(Boolean);
+    if (parts.length >= 3) return {type: "categories", nodes: parts.map(p => ({label: p, detail: ""}))};
+  }
+
+  // "...three things: identity, intent, compatibility." — a short
+  // comma-separated list introduced by a colon.
+  const colonMatch = text.match(/:\s*([^.:\n]+)\.?\s*$/);
+  if (colonMatch) {
+    const candidates = colonMatch[1].split(",").map(s => s.trim()).filter(Boolean);
+    if (candidates.length >= 3 && candidates.every(c => c.split(/\s+/).length <= 5)) {
+      return {type: "categories", nodes: candidates.map(p => ({label: p, detail: ""}))};
+    }
+  }
+
+  return prose;
+}
+
+function toneFor(label, index) {
+  for (const rule of TONE_RULES) if (rule.pattern.test(label)) return rule.tone;
+  return index % 2 === 0 ? "tone-a" : "tone-b";
+}
+
+function buildFlowNode(node, {index, tone, root} = {}) {
+  const el = document.createElement("div");
+  el.className = "flow-node";
+  if (tone) el.classList.add("flow-node-tone", tone);
+  if (root) el.classList.add("flow-node-root");
+
+  if (typeof index === "number") {
+    const badge = document.createElement("span");
+    badge.className = "flow-node-index";
+    badge.textContent = String(index);
+    el.appendChild(badge);
+  }
+
+  const label = document.createElement("p");
+  label.className = "flow-node-label";
+  label.textContent = node.label;
+  el.appendChild(label);
+  return el;
+}
+
+function appendFlowDetails(container, nodes) {
+  const withDetail = nodes.filter(node => node.detail);
+  if (!withDetail.length) return;
+
+  const list = document.createElement("div");
+  list.className = "flow-details";
+  for (const node of withDetail) {
+    const row = document.createElement("p");
+    row.className = "flow-detail-row";
+    const strong = document.createElement("strong");
+    strong.textContent = node.label;
+    row.append(strong, document.createTextNode(` — ${node.detail}`));
+    list.appendChild(row);
+  }
+  container.appendChild(list);
+}
+
+function renderSequenceDiagram(container, nodes) {
+  const flow = document.createElement("div");
+  flow.className = "flow-diagram flow-sequence";
+  nodes.forEach((node, i) => {
+    if (i > 0) {
+      const connector = document.createElement("span");
+      connector.className = "flow-connector";
+      connector.setAttribute("aria-hidden", "true");
+      flow.appendChild(connector);
+    }
+    flow.appendChild(buildFlowNode(node, {index: i + 1}));
+  });
+  container.appendChild(flow);
+  appendFlowDetails(container, nodes);
+}
+
+function renderCategoriesDiagram(container, nodes) {
+  const flow = document.createElement("div");
+  flow.className = "flow-diagram flow-categories";
+  nodes.forEach((node, i) => flow.appendChild(buildFlowNode(node, {tone: toneFor(node.label, i)})));
+  container.appendChild(flow);
+  appendFlowDetails(container, nodes);
+}
+
+function renderTreeDiagram(container, root, nodes) {
+  const wrap = document.createElement("div");
+  wrap.className = "flow-diagram flow-tree";
+
+  wrap.appendChild(buildFlowNode(root, {root: true}));
+
+  const branches = document.createElement("div");
+  branches.className = "flow-branches";
+  for (const node of nodes) branches.appendChild(buildFlowNode(node));
+  wrap.appendChild(branches);
+
+  container.appendChild(wrap);
+  appendFlowDetails(container, [root, ...nodes]);
+}
+
+// ---------- Markdown rendering ----------
+// Model answers routinely come back as real markdown: "## " headers,
+// numbered/bulleted lists, "**bold**", and "| a | b |" tables. None of
+// that was ever parsed — it rendered as literal text with the stray #, *,
+// and | characters visible. This is a small, purpose-built block parser
+// for exactly that whitelist (headers, lists, tables, bold/italic/code,
+// paragraphs) — not a general Markdown/HTML renderer. Every text segment
+// is escaped first via escapeHtml, and only the specific tags this code
+// inserts itself are ever added afterward, so a model response can never
+// inject arbitrary HTML (a literal "<img onerror=...>" in the answer text
+// becomes the inert string "&lt;img onerror=...&gt;" before any markdown
+// substitution runs).
+
+const HEADING_TAGS = {1: "h3", 2: "h3", 3: "h4", 4: "h5"};
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Inline formatting within an already-block-parsed line: bold, italic,
+// inline code. Operates on escaped text, so the only tags that can appear
+// in the result are the <strong>/<em>/<code> this function writes itself.
+function renderInlineMarkdown(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+  html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  return html;
+}
+
+function splitTableRow(line) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map(cell => cell.trim());
+}
+
+const TABLE_SEPARATOR_LINE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+
+// Splits answer text into typed blocks (heading/table/ol/ul/paragraph).
+// Deliberately only recognizes explicit markdown syntax (a line starting
+// with "#", a real "|...|" table with a "---" separator row, "1. "/"- "
+// list markers) — it does not try to guess structure from plain prose,
+// which is what the separate shape-detector below is for.
+function parseMarkdownBlocks(rawText) {
+  const lines = String(rawText || "").replace(/\r\n/g, "\n").split("\n");
+  const blocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headerMatch) {
+      blocks.push({type: "heading", level: Math.min(headerMatch[1].length, 4), text: headerMatch[2].trim()});
+      i++;
+      continue;
+    }
+
+    if (line.includes("|") && lines[i + 1] && TABLE_SEPARATOR_LINE.test(lines[i + 1])) {
+      const header = splitTableRow(line);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim()) {
+        rows.push(splitTableRow(lines[i]));
+        i++;
+      }
+      blocks.push({type: "table", header, rows});
+      continue;
+    }
+
+    if (/^\d+[.)]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+[.)]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+[.)]\s+/, "").trim());
+        i++;
+      }
+      blocks.push({type: "ol", items});
+      continue;
+    }
+
+    if (/^[-*•]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*•]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*•]\s+/, "").trim());
+        i++;
+      }
+      blocks.push({type: "ul", items});
+      continue;
+    }
+
+    const paraLines = [line];
+    i++;
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !/^#{1,6}\s+/.test(lines[i]) &&
+      !/^\d+[.)]\s+/.test(lines[i]) &&
+      !/^[-*•]\s+/.test(lines[i])
+    ) {
+      paraLines.push(lines[i]);
+      i++;
+    }
+    blocks.push({type: "p", text: paraLines.join(" ").trim()});
+  }
+
+  return blocks;
+}
+
+function renderMarkdownAnswer(container, rawText) {
+  const blocks = parseMarkdownBlocks(rawText);
+  if (!blocks.length) {
+    const p = document.createElement("p");
+    p.textContent = "No answer returned.";
+    container.appendChild(p);
+    return;
+  }
+
+  for (const block of blocks) {
+    if (block.type === "heading") {
+      const el = document.createElement(HEADING_TAGS[block.level] || "h4");
+      el.className = "answer-heading";
+      el.innerHTML = renderInlineMarkdown(block.text);
+      container.appendChild(el);
+    } else if (block.type === "p") {
+      const el = document.createElement("p");
+      el.innerHTML = renderInlineMarkdown(block.text);
+      container.appendChild(el);
+    } else if (block.type === "ol" || block.type === "ul") {
+      const el = document.createElement(block.type);
+      el.className = "answer-list";
+      for (const item of block.items) {
+        const li = document.createElement("li");
+        li.innerHTML = renderInlineMarkdown(item);
+        el.appendChild(li);
+      }
+      container.appendChild(el);
+    } else if (block.type === "table") {
+      const wrap = document.createElement("div");
+      wrap.className = "answer-table-wrap";
+      const table = document.createElement("table");
+      table.className = "answer-table";
+
+      const thead = document.createElement("thead");
+      const headRow = document.createElement("tr");
+      for (const cell of block.header) {
+        const th = document.createElement("th");
+        th.innerHTML = renderInlineMarkdown(cell);
+        headRow.appendChild(th);
+      }
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      for (const row of block.rows) {
+        const tr = document.createElement("tr");
+        for (const cell of row) {
+          const td = document.createElement("td");
+          td.innerHTML = renderInlineMarkdown(cell);
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+
+      wrap.appendChild(table);
+      container.appendChild(wrap);
+    }
+  }
+}
+
+// A real markdown header, table, or bold span is a much more reliable
+// structural signal than the plain-text shape guesses below, and a long
+// markdown document (the common case for model output) shouldn't get
+// force-fit into a 3-4 node diagram meant for short, bare, unformatted
+// answers. So: markdown syntax present -> render it properly as rich
+// text; otherwise -> try the compact shape diagrams; otherwise -> plain
+// paragraphs (still routed through the markdown renderer so a stray
+// inline "**word**" in an otherwise plain answer still renders).
+const MARKDOWN_SIGNAL = /(^|\n)#{1,6}\s+\S|\*\*[^*\n]+\*\*|(^|\n)[ \t]*\|.+\|[ \t]*(\n|$)/;
+
+function renderAnswerContent(container, text) {
+  container.innerHTML = "";
+  const raw = String(text || "");
+
+  if (MARKDOWN_SIGNAL.test(raw)) {
+    renderMarkdownAnswer(container, raw);
+    return;
+  }
+
+  const structure = parseAnswerStructure(raw);
+  const nodeCount = structure.nodes ? structure.nodes.length : 0;
+  const minNodes = structure.type === "tree" ? 2 : 3;
+
+  if (structure.type !== "prose" && nodeCount >= minNodes) {
+    if (structure.type === "sequence") renderSequenceDiagram(container, structure.nodes);
+    else if (structure.type === "categories") renderCategoriesDiagram(container, structure.nodes);
+    else if (structure.type === "tree") renderTreeDiagram(container, structure.root, structure.nodes);
+    return;
+  }
+
+  renderMarkdownAnswer(container, raw || "No answer returned.");
+}
+
 function renderAnswer(surface, question, data) {
   const output = surface.querySelector("[data-ask-output]");
   const label = surface.querySelector("[data-question-label]");
@@ -170,7 +573,7 @@ function renderAnswer(surface, question, data) {
   output.dataset.state = "ready";
   label.textContent = question;
   status.textContent = data.status === "blocked" ? "Blocked" : statusText(evidenceItems.length);
-  answer.textContent = data.answer || "No answer returned.";
+  renderAnswerContent(answer, data.answer || "No answer returned.");
   renderEvidence(surface, evidenceItems, data.mode === "thinking_window" ? "Grounding" : "Evidence trail");
 }
 

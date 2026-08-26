@@ -568,6 +568,205 @@ input:focus, textarea:focus, select:focus {
   line-height: 1.55;
 }
 
+/* ---------- Markdown rendering inside an answer: headers, lists, and
+   tables built by renderMarkdownAnswer() in app.js. Same typography and
+   card tokens as the rest of the site — no new ad-hoc styles. ---------- */
+
+.answer-text > :first-child { margin-top: 0; }
+.answer-text > :last-child { margin-bottom: 0; }
+
+.answer-text p { margin: 0 0 14px; }
+
+.answer-heading {
+  margin: 20px 0 8px;
+  color: var(--ink);
+  font-weight: 780;
+  line-height: 1.25;
+}
+
+.answer-text h3.answer-heading { font-size: 1.22rem; }
+.answer-text h4.answer-heading { font-size: 1.08rem; }
+.answer-text h5.answer-heading {
+  color: var(--accent);
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.answer-list {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+.answer-list li { line-height: 1.55; }
+
+.answer-text code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+.answer-table-wrap {
+  margin: 4px 0 16px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+}
+
+.answer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.answer-table th,
+.answer-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.answer-table thead th {
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.answer-table tbody tr:last-child td { border-bottom: none; }
+
+/* ---------- Structured-answer flow diagrams: a sequence, a set of
+   parallel states, or a decision framework detected in the answer text
+   renders as connected nodes instead of a text dump. Same --shadow-card
+   tokens as every other card on the site, so it reads as native, not
+   bolted on. Falls back to plain prose in .answer-text when the content
+   has no clear shape (see appendFlowDetails / renderAnswerContent). ---------- */
+
+.flow-diagram {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 2px 0 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.flow-sequence { align-items: center; }
+.flow-categories { flex-wrap: wrap; gap: 12px; }
+
+.flow-node {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 6px;
+  min-width: 128px;
+  max-width: 220px;
+  padding: 13px 15px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-card);
+}
+
+.flow-node-index {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.flow-node-label {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 720;
+  line-height: 1.32;
+}
+
+.flow-connector {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.flow-connector::before { content: "→"; }
+
+.flow-node-tone.tone-positive { box-shadow: var(--shadow-card), inset 3px 0 0 var(--accent-2); }
+.flow-node-tone.tone-negative { box-shadow: var(--shadow-card), inset 3px 0 0 var(--danger); }
+.flow-node-tone.tone-neutral,
+.flow-node-tone.tone-a { box-shadow: var(--shadow-card), inset 3px 0 0 var(--accent); }
+.flow-node-tone.tone-b { box-shadow: var(--shadow-card), inset 3px 0 0 var(--quiet); }
+
+.flow-tree {
+  flex-direction: column;
+  align-items: center;
+  overflow: visible;
+}
+
+.flow-node-root {
+  background: var(--ink);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.flow-node-root .flow-node-label { color: var(--bg); }
+
+.flow-branches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 2px solid var(--line);
+}
+
+.flow-branches .flow-node { position: relative; }
+
+.flow-branches .flow-node::before {
+  content: "";
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  width: 2px;
+  height: 18px;
+  background: var(--line);
+}
+
+.flow-details {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.flow-detail-row {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.flow-detail-row strong { color: var(--ink); }
+
+@media (max-width: 600px) {
+  .flow-sequence { flex-direction: column; align-items: stretch; }
+  .flow-sequence .flow-node { max-width: none; }
+  .flow-connector { width: auto; height: 22px; }
+  .flow-connector::before { content: "↓"; }
+}
+
 .evidence-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
