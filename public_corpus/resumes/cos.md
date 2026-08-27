@@ -8,8 +8,8 @@ Rahul Shiv Shankar
 rshivs.1295@gmail.com  |  +91 8766281386  |  linkedin.com/in/rshivs  |  Mumbai, India
 6+ years across deep-tech, edtech, and consulting. Built Akshar, an agentic content writer featured in the GrowthX newsletter, and 
 Sahayak, a hiring marketplace at sahayakhq.co. Hosted three buildathons under GrowthX including Hermes with 100+ participants, 
-mentoring teams on revenue and virality. At Regenesys led product launches, P&L, and GTM execution. At PwC project managed 
-enterprise CRM deployments for leading BFSI clients. Work best where ownership is real and execution is what moves the needle.
+mentoring teams on revenue and virality. At Regenesys led product launches, P&L, and GTM execution. At PwC, worked as a tech 
+consultant and project manager on Salesforce implementations for BFSI clients. Work best where ownership is real and execution is what moves the needle.
 AI PROJECTS AND COMMUNITY
 • Akshar -- Agentic content writer for Twitter, LinkedIn, and Blog. 7-stage pipeline with a DeAify agent and tone detector that matches 
 your actual writing voice. Featured in the GrowthX newsletter after the co-founder and founder responded to the data callouts and 
@@ -44,8 +44,8 @@ new commission model, fixed pitches where mis-selling was happening, and worked 
 • Audited call recordings across sales teams to assess pitch quality, pricing reactions, and mis-selling patterns. Findings fed directly into 
 how programs and FlexiPay were positioned and sold on the floor.
 PwC Jul 2023 -- Jul 2024
-Project Management | Salesforce B2B SaaS
-• Kept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.
+Tech Consultant / Project Manager | Salesforce Implementations, BFSI
+• Managed Salesforce implementations for BFSI clients as a tech consultant — kept 0-1 CRM rollouts on track by staying between client leadership and engineering, absorbing ambiguity on both sides and keeping delivery moving.
 Synopsys Jun 2017 -- Jun 2021
 Verification Engineer | Semiconductor IP
 • 4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products 
@@ -54,7 +54,7 @@ EDUCATION
 BITSoM (BITS School of Management), Mumbai 2021 -- 2023
 MBA, Leadership and Strategy
 Jamia Millia Islamia, New Delhi 2013 -- 2017
-B.Tech, Electronics and Communication  |  Certified Scrum Manager, Scrum Alliance
+B.Tech, Electronics and Communication
 SKILLS
 Strategy and Ops: P&L management, GTM planning, operating cadence, stakeholder management, 0-1 launches
 Commercial: Funnel analysis (CPL, ROAS), unit economics, pricing, business reviews

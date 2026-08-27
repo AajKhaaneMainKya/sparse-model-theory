@@ -44,8 +44,8 @@ new commission model, fixed pitches where mis-selling was happening, and worked 
 • Audited call recordings across sales teams to assess pitch quality, pricing reactions, and mis-selling patterns. Findings fed directly into 
 how programs and FlexiPay were positioned and sold on the floor.
 PwC Jul 2023 -- Jul 2024
-Project Management | Salesforce B2B SaaS
-• Kept 0-1 CRM implementations on track for BFSI clients by staying between client leadership and engineering -- absorbing ambiguity on both sides and keeping delivery moving.
+Tech Consultant / Project Manager | Salesforce Implementations, BFSI
+• Managed Salesforce implementations for BFSI clients as a tech consultant — kept 0-1 CRM rollouts on track by staying between client leadership and engineering, absorbing ambiguity on both sides and keeping delivery moving.
 Synopsys Jun 2017 -- Jun 2021
 Verification Engineer | Semiconductor IP
 • 4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products 
@@ -54,7 +54,7 @@ EDUCATION
 BITSoM (BITS School of Management), Mumbai 2021 -- 2023
 MBA, Leadership and Strategy
 Jamia Millia Islamia, New Delhi 2013 -- 2017
-B.Tech, Electronics and Communication  |  Certified Scrum Manager, Scrum Alliance
+B.Tech, Electronics and Communication
 SKILLS
 Growth and GTM: P&L management, funnel analysis (CPL, ROAS), unit economics, GTM planning, campaign execution
 Product: 0-1 launches, roadmap planning, cross-functional execution, stakeholder management

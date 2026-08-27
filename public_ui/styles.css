@@ -298,6 +298,17 @@ h3 {
 
 .positioning { margin: 30px 0 32px; }
 
+/* Hero trust line: a quiet, factual credibility anchor under the H1.
+   Reuses existing tokens only (--muted, the .product-topline small
+   weight) -- deliberately not eyebrow-styled (uppercase/accent) so it
+   doesn't compete with the real eyebrow label above the headline. */
+.trust-line {
+  margin: 22px 0 30px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
 .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .button { padding: 0 18px; }
