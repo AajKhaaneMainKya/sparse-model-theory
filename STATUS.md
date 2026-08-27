@@ -90,3 +90,22 @@
   threads for an "Uncategorized" session. No schema change is required: `input_text`
   is stored full and un-truncated, which is what good embeddings need. This is a
   documented future phase only; do not build the suggestion logic yet.
+- **Thinking Window's flow-diagram tree-shape-detector misfires on the real
+  `_thinking_fallback_answer()` template shape (`api/public_portfolio.py`),
+  producing garbled, truncated output on the public site.** Found during an
+  end-to-end verification pass (real backend response piped through the real
+  frontend, not a mock). Root cause: `parseAnswerStructure()` in
+  `vercel_public/app.js` / `public_ui/app.js` treats a rhetorical question
+  mid-paragraph ("...What has to be true for this to become a serious product
+  or GTM bet?" in the "Rahul-like Frame" section) as a root question, then
+  picks up the following short section headers ("Next 3 Moves", "Grounding",
+  etc.) and numbered-list items as if they were its child nodes — rendering a
+  tree diagram out of content that was never meant to be one. Pre-existing:
+  neither `_thinking_fallback_answer()` nor the shape-detector changed when
+  this was found; no earlier test had exercised this exact combination (prior
+  tests used either mocked markdown text or synthetic shape text, never the
+  real fallback template). Not fixed in this pass — flagged for a future one.
+  Likely fix direction: tighten the tree-detector's question-line check (e.g.
+  require the "?" line to be short/standalone rather than the tail of a long
+  paragraph) or exclude section-header-shaped lines from ever counting as
+  tree children.

@@ -14,6 +14,15 @@ from .zone import _call_openai_model
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_CORPUS_DIR = ROOT / "public_corpus"
+# public_corpus/decisions.md, if present, is Rahul's own reasoning framework
+# (tension / signal / decision patterns) -- it is loaded directly into
+# Thinking Window's system prompt on every call (see
+# _thinking_window_system_prompt()) rather than through the normal
+# retrieval/scoring path, and is deliberately excluded from the retrieved
+# grounding/evidence list (see build_thinking_window_context()): it's a
+# method being applied, not a fact being cited, so it must never show up
+# next to resume/project evidence the way a citation would.
+DECISIONS_FRAMEWORK_SOURCE = "decisions.md"
 PUBLIC_SYSTEM_PROMPT = (
     "You answer questions about Rahul's work and fit using only the provided public corpus excerpts. "
     "If the corpus does not support a claim, say that evidence is missing. Be specific, "
@@ -1513,17 +1522,66 @@ def _safe_thinking_grounding_payload(item: PublicEvidence) -> tuple[PublicEviden
     )
 
 
+def _is_decisions_framework_source(source: str) -> bool:
+    return source == DECISIONS_FRAMEWORK_SOURCE or source.startswith(f"{DECISIONS_FRAMEWORK_SOURCE}#")
+
+
+def _decisions_framework_text() -> str:
+    """Load decisions.md fresh from disk (no caching, matching load_public_documents()
+    being re-read per request) so it always reflects the file's current content.
+    Returns "" if the file doesn't exist yet -- callers must treat that as
+    "no framework to inject" rather than an error.
+    """
+    path = PUBLIC_CORPUS_DIR / DECISIONS_FRAMEWORK_SOURCE
+    if not path.exists():
+        return ""
+    return normalize_public_text(path.read_text(encoding="utf-8")).strip()
+
+
+def _thinking_window_system_prompt() -> str:
+    """Thinking Window's system prompt, with decisions.md's reasoning framework
+    appended when present. Ask Rahul never calls this -- it uses the plain
+    PUBLIC_SYSTEM_PROMPT constant -- so the framework only ever shapes
+    Thinking Window's reasoning, never Ask Rahul's fact lookups.
+    """
+    framework = _decisions_framework_text()
+    if not framework:
+        return THINKING_WINDOW_SYSTEM_PROMPT
+    return (
+        f"{THINKING_WINDOW_SYSTEM_PROMPT}\n\n"
+        "REASONING FRAMEWORK -- apply this, never cite it:\n"
+        "The block below is Rahul's own reasoning framework: a set of tension / "
+        "signal / decision patterns. Use it to shape HOW you reason through the "
+        "visitor's scenario -- which tension is actually in play, what the "
+        "tempting-but-wrong instinct is, what signal would actually resolve it, "
+        "and what decision follows -- the way a person applies a mental model "
+        "while thinking, not a fact they look up. Never quote it verbatim, name "
+        "it, attribute a claim to it, or present it as evidence about Rahul's "
+        "history or work. It is not a source -- it must never appear in an "
+        "evidence list, a citation, or a 'Grounding' section.\n\n"
+        f"{framework}"
+    )
+
+
 def build_thinking_window_context(question: str) -> tuple[list[PublicEvidence], list[str]]:
     documents = load_public_documents()
-    grounding_query = (
-        f"{question} product GTM agentic systems founder shipped Akshar Sahayak Sparse Model Theory OpenClaw"
-    )
-    evidence = retrieve_public_evidence(grounding_query, documents)
+    # Retrieve using the visitor's actual question text -- matching how Ask
+    # Rahul's retrieve_public_evidence(question, documents) already works --
+    # instead of the fixed, broad keyword string this used to append to
+    # every question ("product GTM agentic systems founder shipped Akshar
+    # Sahayak Sparse Model Theory OpenClaw"). That fixed string structurally
+    # favored resume/project docs regardless of what was actually asked, so
+    # grounding never varied with the question (confirmed: three distinct
+    # questions all returned identical grounding).
+    evidence = retrieve_public_evidence(question, documents)
     compact: list[PublicEvidence] = []
     seen_sources: set[str] = set()
     redactions: list[str] = []
     for item in evidence:
-        if item.source in seen_sources:
+        # decisions.md is injected into the system prompt above, not cited
+        # as evidence -- exclude it here so it can never double up as a
+        # "grounding" item even if it scores well against the question.
+        if item.source in seen_sources or _is_decisions_framework_source(item.source):
             continue
         seen_sources.add(item.source)
         safe_item, labels = _safe_thinking_grounding_payload(item)
@@ -1602,7 +1660,7 @@ def _thinking_model_answer(question: str, grounding: list[PublicEvidence]) -> di
         "Do not dump resume evidence. Mention public grounding briefly only as style/proof context."
     )
     text = _call_openai_model(
-        THINKING_WINDOW_SYSTEM_PROMPT,
+        _thinking_window_system_prompt(),
         input_text,
         model,
         json_schema=THINKING_WINDOW_SCHEMA,
