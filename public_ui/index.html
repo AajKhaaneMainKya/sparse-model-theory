@@ -100,26 +100,20 @@
         <div class="section-lead reveal">
           <p class="eyebrow">Timeline</p>
           <h2>How I got here.</h2>
-          <p>Work history, what I'm building now, and who I've worked with — in order.</p>
+          <p>Work history, most recent first — left to right.</p>
         </div>
 
-        <ol class="timeline">
+        <!-- Substack: no live URL exists in public_corpus/ yet. Omitted
+             rather than linking a placeholder -- add the real link and
+             it gets its own entry, once it exists. -->
+        <ol class="timeline timeline-work">
           <li class="timeline-item">
             <span class="timeline-marker" aria-hidden="true"></span>
             <div class="timeline-card">
-              <span class="timeline-period">Jun 2017 — Jun 2021</span>
-              <h3>Synopsys</h3>
-              <p class="timeline-role">Verification Engineer | Semiconductor IP</p>
-              <p>4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products are developed and brought to market.</p>
-            </div>
-          </li>
-          <li class="timeline-item">
-            <span class="timeline-marker" aria-hidden="true"></span>
-            <div class="timeline-card">
-              <span class="timeline-period">Jul 2023 — Jul 2024</span>
-              <h3>PwC</h3>
-              <p class="timeline-role">Tech Consultant / Project Manager | Salesforce Implementations, BFSI</p>
-              <p>Managed Salesforce implementations for BFSI clients as a tech consultant — kept 0-1 CRM rollouts on track by staying between client leadership and engineering, absorbing ambiguity on both sides and keeping delivery moving.</p>
+              <span class="timeline-period">Apr 2025 — Present</span>
+              <h3>Cadence Design Systems</h3>
+              <p class="timeline-role">Lead Technical Marketing Engineer | Semiconductor Software</p>
+              <p>Own messaging and positioning across 40+ product lines. Translate complex EDA products into clear narratives for sales and customer-facing teams globally.</p>
             </div>
           </li>
           <li class="timeline-item">
@@ -134,56 +128,71 @@
           <li class="timeline-item">
             <span class="timeline-marker" aria-hidden="true"></span>
             <div class="timeline-card">
-              <span class="timeline-period">Apr 2025 — Present</span>
-              <h3>Cadence Design Systems</h3>
-              <p class="timeline-role">Lead Technical Marketing Engineer | Semiconductor Software</p>
-              <p>Own messaging and positioning across 40+ product lines. Translate complex EDA products into clear narratives for sales and customer-facing teams globally.</p>
-            </div>
-          </li>
-          <!-- Substack: no live URL exists in public_corpus/ yet. Omitted
-               rather than linking a placeholder -- add the real link and
-               this entry goes here, between the work timeline and AI
-               projects. -->
-          <li class="timeline-item">
-            <span class="timeline-marker" aria-hidden="true"></span>
-            <div class="timeline-card">
-              <span class="timeline-period">AI Project</span>
-              <h3>Akshar</h3>
-              <p class="timeline-role">Agentic writing workflow with staged drafting and editorial control.</p>
-              <p><a href="https://aksharthewriter.vercel.app/offline" target="_blank" rel="noopener">aksharthewriter.vercel.app</a></p>
-              <span class="timeline-status">In private preview</span>
+              <span class="timeline-period">Jul 2023 — Jul 2024</span>
+              <h3>PwC</h3>
+              <p class="timeline-role">Tech Consultant / Project Manager | Salesforce Implementations, BFSI</p>
+              <p>Managed Salesforce implementations for BFSI clients as a tech consultant — kept 0-1 CRM rollouts on track by staying between client leadership and engineering, absorbing ambiguity on both sides and keeping delivery moving.</p>
             </div>
           </li>
           <li class="timeline-item">
             <span class="timeline-marker" aria-hidden="true"></span>
             <div class="timeline-card">
-              <span class="timeline-period">AI Project</span>
-              <h3>Sahayak</h3>
-              <p class="timeline-role">Talent surface shaped around startup operating reality and matching quality.</p>
-              <p><a href="https://sahayakhq.co/" target="_blank" rel="noopener">sahayakhq.co</a></p>
-              <span class="timeline-status">In private preview</span>
-            </div>
-          </li>
-          <li class="timeline-item">
-            <span class="timeline-marker" aria-hidden="true"></span>
-            <div class="timeline-card">
-              <span class="timeline-period">Companies worked with</span>
-              <div class="timeline-companies">
-                <span>Cadence Design Systems</span>
-                <span>Regenesys Education</span>
-                <span>PwC</span>
-                <span>Synopsys</span>
-              </div>
+              <span class="timeline-period">Jun 2017 — Jun 2021</span>
+              <h3>Synopsys</h3>
+              <p class="timeline-role">Verification Engineer | Semiconductor IP</p>
+              <p>4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products are developed and brought to market.</p>
             </div>
           </li>
         </ol>
+
+        <div class="timeline-companies-strip reveal">
+          <span class="mini-label">Companies worked with</span>
+          <div class="timeline-companies">
+            <span>Cadence Design Systems</span>
+            <span>Regenesys Education</span>
+            <span>PwC</span>
+            <span>Synopsys</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="ai-projects-section">
+        <div class="ai-projects-inner">
+          <div class="section-lead reveal">
+            <p class="eyebrow">AI Projects</p>
+            <h2>What I'm building now.</h2>
+          </div>
+          <div class="ai-projects-grid">
+            <article class="ai-project-card reveal">
+              <span class="proof-tag">AI writing / offline workflow</span>
+              <h3>Akshar</h3>
+              <p>Agentic writing workflow with staged drafting and editorial control.</p>
+              <p><a href="https://aksharthewriter.vercel.app/offline" target="_blank" rel="noopener">aksharthewriter.vercel.app</a></p>
+              <span class="timeline-status">In private preview</span>
+            </article>
+            <article class="ai-project-card reveal">
+              <span class="proof-tag">Marketplace / GTM</span>
+              <h3>Sahayak</h3>
+              <p>Talent surface shaped around startup operating reality and matching quality.</p>
+              <p><a href="https://sahayakhq.co/" target="_blank" rel="noopener">sahayakhq.co</a></p>
+              <span class="timeline-status">In private preview</span>
+            </article>
+          </div>
+        </div>
       </section>
     </section>
 
     <section class="thinking-page page-section" data-page="thinking" id="thinking-window">
       <div class="thinking-layout reveal">
         <div class="section-lead">
-          <span class="beta-badge">Beta — limited</span>
+          <span class="beta-badge">
+            <svg class="warning-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3.5 2 20.5h20L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+              <path d="M12 9.5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <circle cx="12" cy="17.2" r="1" fill="currentColor" />
+            </svg>
+            Beta — limited
+          </span>
           <p class="eyebrow">AMA</p>
           <h1>See how I reason through messy problems.</h1>
           <p>Use a scenario, product call, GTM question, or agentic-system tradeoff.</p>
