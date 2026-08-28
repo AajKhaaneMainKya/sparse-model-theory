@@ -2,30 +2,17 @@ const pages = new Set(["/", "/thinking-window", "/contact"]);
 const ASK_RAHUL_ENDPOINT = "/api/ask-rahul";
 const THINKING_WINDOW_ENDPOINT = "/api/thinking-window";
 const CONTACT_ENDPOINT = "/api/contact-request";
+// Internal storage key only, never rendered -- kept as-is through the
+// AMA relabeling since it's not user-visible.
 const THINKING_COUNT_KEY = "rahul-thinking-window-count";
 const CONTACT_PROFILE_KEY = "rahul-public-contact";
-const THEME_KEY = "rahul-theme";
 
-const themeToggle = document.querySelector("[data-theme-toggle]");
-const themeIcon = document.querySelector("[data-theme-icon]");
 const softContact = document.querySelector("[data-soft-contact]");
 const navMenu = document.querySelector("[data-nav-menu]");
 const navLinks = document.querySelector("[data-nav-links]");
 
 function apiPath(path) {
   return path;
-}
-
-function preferredTheme() {
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  localStorage.setItem(THEME_KEY, theme);
-  if (themeIcon) themeIcon.textContent = theme === "dark" ? "Dark" : "Light";
 }
 
 function currentPath() {
@@ -660,22 +647,6 @@ for (const link of document.querySelectorAll("[data-route]")) {
   });
 }
 
-// Persistent-header links that point at a section inside the home page
-// (Proof, Ask Rahul CTA). A bare `#id` href only works while already on
-// "/" — from any other route it just appends the hash to the current
-// path, and the target (nested inside the home-only [data-page]
-// wrapper) is hidden, so the click silently does nothing. This routes
-// home first (a no-op if already there, since go()/renderRoute() are
-// synchronous) and then scrolls to the now-visible target.
-for (const link of document.querySelectorAll("[data-anchor]")) {
-  link.addEventListener("click", event => {
-    event.preventDefault();
-    if (currentPath() !== "/") go("/");
-    document.getElementById(link.dataset.anchor)?.scrollIntoView({behavior: "smooth", block: "start"});
-    closeMobileNav();
-  });
-}
-
 for (const link of document.querySelectorAll('a[href^="#"]')) {
   link.addEventListener("click", () => closeMobileNav());
 }
@@ -701,6 +672,11 @@ for (const form of document.querySelectorAll("[data-contact-form]")) {
   const status = form.querySelector("[data-contact-status]");
   form.addEventListener("submit", event => {
     event.preventDefault();
+    if (!validateContactForm(form)) {
+      status.textContent = "Fix the highlighted fields and try again.";
+      status.className = "form-status error";
+      return;
+    }
     submitContact(form, status, "contact");
   });
 }
@@ -711,6 +687,11 @@ for (const form of document.querySelectorAll("[data-inline-contact-form]")) {
   form.after(status);
   form.addEventListener("submit", event => {
     event.preventDefault();
+    if (!validateContactForm(form)) {
+      status.textContent = "Fix the highlighted fields and try again.";
+      status.className = "form-status error";
+      return;
+    }
     submitContact(form, status, "thinking_window");
   });
 }
@@ -722,12 +703,6 @@ for (const portrait of document.querySelectorAll("[data-portrait]")) {
   });
 }
 
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
-  });
-}
-
 if (navMenu && navLinks) {
   navMenu.addEventListener("click", () => {
     const open = !document.body.classList.contains("nav-open");
@@ -736,6 +711,8 @@ if (navMenu && navLinks) {
   });
 }
 
+// One-way reveal (existing pattern): fades in on first scroll-into-view
+// and stays -- used for section leads, workbench tiles, contact loop.
 const observer = "IntersectionObserver" in window
   ? new IntersectionObserver(entries => {
       for (const entry of entries) {
@@ -749,7 +726,70 @@ for (const item of document.querySelectorAll(".reveal")) {
   else item.classList.add("is-visible");
 }
 
+// Timeline reveal (portfolio page): the SAME IntersectionObserver
+// mechanism and CSS transition as .reveal above, but reversible -- toggles
+// is-visible both ways instead of only ever adding it, so scrolling back
+// up past an entry fades/slides it back out. Same threshold, same
+// transition timing/curve (defined once in .timeline-item in styles.css,
+// not per-entry), just two-way instead of one-way.
+const timelineObserver = "IntersectionObserver" in window
+  ? new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        entry.target.classList.toggle("is-visible", entry.isIntersecting);
+      }
+    }, {threshold: 0.12})
+  : null;
+
+for (const item of document.querySelectorAll(".timeline-item")) {
+  if (timelineObserver) timelineObserver.observe(item);
+  else item.classList.add("is-visible");
+}
+
+// ---------- Contact form validation ----------
+// Real client-side checks before submit, with inline per-field messages
+// (not a silent block). Email: standard shape check. Phone: accepts
+// either a 10-digit Indian local number (optionally with a leading 0),
+// a +91 prefixed Indian number, or a looser international E.164-style
+// number (+ and 8-15 digits) -- phone is optional on both forms, so an
+// empty value is valid; only a non-empty, malformed value is rejected.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^(?:\+91[\s-]?)?[6-9]\d{9}$|^\+?[1-9]\d{7,14}$/;
+
+function setFieldError(form, fieldName, isValid) {
+  const field = form.elements[fieldName];
+  const errorEl = form.querySelector(`[data-error-for="${fieldName}"]`);
+  if (!field) return;
+  field.setAttribute("aria-invalid", isValid ? "false" : "true");
+  if (errorEl) errorEl.classList.toggle("is-visible", !isValid);
+}
+
+function validateContactForm(form) {
+  let valid = true;
+
+  const email = form.elements.email?.value.trim() || "";
+  const emailValid = email.length > 0 && EMAIL_PATTERN.test(email);
+  if (form.elements.email) {
+    setFieldError(form, "email", emailValid);
+    if (!emailValid) valid = false;
+  }
+
+  const phone = form.elements.phone?.value.trim() || "";
+  const phoneValid = phone.length === 0 || PHONE_PATTERN.test(phone.replace(/[\s-]/g, ""));
+  if (form.elements.phone) {
+    setFieldError(form, "phone", phoneValid);
+    if (!phoneValid) valid = false;
+  }
+
+  return valid;
+}
+
+for (const form of document.querySelectorAll("[data-contact-form], [data-inline-contact-form]")) {
+  for (const fieldName of ["email", "phone"]) {
+    const field = form.elements[fieldName];
+    field?.addEventListener("blur", () => validateContactForm(form));
+  }
+}
+
 window.addEventListener("popstate", renderRoute);
-applyTheme(preferredTheme());
 if (thinkingCount() >= 2 && softContact) softContact.hidden = false;
 renderRoute();

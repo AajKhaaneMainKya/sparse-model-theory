@@ -29,14 +29,9 @@
       </button>
       <nav data-nav-links aria-label="Public navigation">
         <a href="/" data-route>Portfolio</a>
-        <a href="/thinking-window" data-route>Thinking Window</a>
-        <a href="/#public-proof" data-anchor="public-proof">Proof</a>
-        <a href="/contact" data-route>Contact</a>
+        <a href="/thinking-window" data-route>AMA (beta)</a>
+        <a href="/contact" data-route>Contact Me</a>
       </nav>
-      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">
-        <span data-theme-icon>Light</span>
-      </button>
-      <a class="nav-cta" href="/#ask-rahul" data-anchor="ask-rahul">Ask Rahul</a>
     </div>
   </header>
 
@@ -44,66 +39,31 @@
     <section class="portfolio-page" data-page="portfolio">
       <section class="hero-shell" id="portfolio">
         <div class="hero-copy reveal">
+          <div class="portrait-chip" aria-label="Rahul portrait">
+            <img
+              src="/assets/rahul.jpg"
+              srcset="/assets/rahul-96.jpg 96w, /assets/rahul-192.jpg 192w, /assets/rahul-480.jpg 480w"
+              sizes="56px"
+              alt="Rahul Shiv Shankar"
+              width="56"
+              height="56"
+              loading="eager"
+              data-portrait
+            />
+            <span class="portrait-fallback" aria-hidden="true">RS</span>
+          </div>
           <p class="eyebrow">Evidence-backed public work model</p>
           <h1>Explore how I think by asking my portfolio directly.</h1>
           <p class="trust-line">6+ years across deep-tech, edtech, and consulting</p>
           <div class="hero-actions" aria-label="Primary actions">
             <a href="#ask-rahul" class="button primary">Ask Rahul</a>
-            <a href="/thinking-window" class="button secondary" data-route>Open Thinking Window</a>
-          </div>
-        </div>
-
-        <div class="hero-product reveal" data-hero-product-surface>
-          <div class="hero-product-primary">
-            <div class="product-topline">
-              <div class="portrait-chip" aria-label="Rahul portrait">
-                <img
-                  src="/assets/rahul.jpg"
-                  srcset="/assets/rahul-96.jpg 96w, /assets/rahul-192.jpg 192w, /assets/rahul-480.jpg 480w"
-                  sizes="72px"
-                  alt="Rahul Shiv Shankar"
-                  width="72"
-                  height="72"
-                  loading="eager"
-                  data-portrait
-                />
-                <span class="portrait-fallback" aria-hidden="true">RS</span>
-              </div>
-              <div>
-                <span>Rahul Shiv Shankar</span>
-                <small>I care more about how I think than what I claim.</small>
-              </div>
-            </div>
-            <div class="hero-ask-card">
-              <span class="mini-label">Ask input</span>
-              <p>How does Rahul evaluate a messy product bet?</p>
-              <div class="input-line"><span></span><strong>Ask Rahul</strong></div>
-            </div>
-          </div>
-          <div class="hero-product-footer">
-            <div class="footer-group">
-              <span class="mini-label">Evidence nodes</span>
-              <div class="footer-tags" aria-hidden="true">
-                <span>Projects</span>
-                <span>Resume</span>
-                <span>Proof</span>
-                <span>Skills</span>
-              </div>
-            </div>
-            <div class="footer-group">
-              <span class="mini-label">Thinking Window</span>
-              <div class="footer-tags" aria-hidden="true">
-                <span>Frame</span>
-                <span>Tests</span>
-                <span>Risks</span>
-              </div>
-            </div>
+            <a href="/thinking-window" class="button secondary" data-route>Open AMA (beta)</a>
           </div>
         </div>
       </section>
 
       <section class="ask-section section-band" id="ask-rahul">
-        <div class="section-lead compact reveal">
+        <div class="section-lead reveal">
           <p class="eyebrow">Ask Rahul</p>
           <h2>Ask evidence-backed questions about the work.</h2>
         </div>
@@ -136,72 +96,103 @@
         </section>
       </section>
 
-      <section class="proof-section dark-band section-band" id="public-proof">
-        <div class="band-inner">
-          <div class="section-lead reveal">
-            <p class="eyebrow">Public Proof</p>
-            <h2>The evidence behind every answer.</h2>
-            <p>Public surfaces and shipped systems Ask Rahul draws on — ask about any of them above.</p>
-          </div>
-          <div class="project-showcase">
-            <a class="project-feature reveal" href="https://aksharthewriter.vercel.app/offline" target="_blank" rel="noopener">
-              <div class="mock-window">
-                <span></span><span></span><span></span>
-                <div class="mock-lines"></div>
-              </div>
-              <div>
-                <span class="proof-tag">AI writing / offline workflow</span>
-                <h3>Akshar</h3>
-                <p>Agentic writing workflow with staged drafting and editorial control.</p>
-              </div>
-              <em>In private preview</em>
-            </a>
-            <a class="project-feature reveal" href="https://sahayakhq.co/" target="_blank" rel="noopener">
-              <div class="mock-window hiring">
-                <span></span><span></span><span></span>
-                <div class="mock-stack"></div>
-              </div>
-              <div>
-                <span class="proof-tag">Marketplace / GTM</span>
-                <h3>Sahayak</h3>
-                <p>Talent surface shaped around startup operating reality and matching quality.</p>
-              </div>
-              <em>In private preview</em>
-            </a>
-          </div>
+      <section class="timeline-section section-band" id="timeline">
+        <div class="section-lead reveal">
+          <p class="eyebrow">Timeline</p>
+          <h2>How I got here.</h2>
+          <p>Work history, what I'm building now, and who I've worked with — in order.</p>
         </div>
-      </section>
 
-      <section class="facts-section section-band" id="work-model" data-evidence-visual>
-        <div class="section-lead compact reveal">
-          <p class="eyebrow">Evidence Layer</p>
-          <h2>Grounding is part of the product.</h2>
-        </div>
-        <div class="facts-band">
-          <div class="facts-statement reveal">
-            <span>Ask Rahul</span>
-            <strong>Answer grounded by public evidence</strong>
-          </div>
-          <div class="facts-row">
-            <div class="fact-item reveal"><span>Resume facts</span><small>roles, scope, chronology</small></div>
-            <div class="fact-item reveal"><span>Projects</span><small>Akshar, Sahayak</small></div>
-            <div class="fact-item reveal"><span>Education</span><small>MBA + engineering foundation</small></div>
-            <div class="fact-item reveal"><span>Skills</span><small>product, GTM, retrieval, agents</small></div>
-            <div class="fact-item reveal"><span>Citations</span><small>source excerpts and boundaries</small></div>
-            <div class="fact-item reveal"><span>Work history</span><small>roles, scope, and operating context</small></div>
-          </div>
-        </div>
+        <ol class="timeline">
+          <li class="timeline-item">
+            <span class="timeline-marker" aria-hidden="true"></span>
+            <div class="timeline-card">
+              <span class="timeline-period">Jun 2017 — Jun 2021</span>
+              <h3>Synopsys</h3>
+              <p class="timeline-role">Verification Engineer | Semiconductor IP</p>
+              <p>4 years at a tier-1 EDA company verifying core semiconductor IP. Built foundational understanding of how complex technology products are developed and brought to market.</p>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <span class="timeline-marker" aria-hidden="true"></span>
+            <div class="timeline-card">
+              <span class="timeline-period">Jul 2023 — Jul 2024</span>
+              <h3>PwC</h3>
+              <p class="timeline-role">Tech Consultant / Project Manager | Salesforce Implementations, BFSI</p>
+              <p>Managed Salesforce implementations for BFSI clients as a tech consultant — kept 0-1 CRM rollouts on track by staying between client leadership and engineering, absorbing ambiguity on both sides and keeping delivery moving.</p>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <span class="timeline-marker" aria-hidden="true"></span>
+            <div class="timeline-card">
+              <span class="timeline-period">Aug 2024 — Mar 2025</span>
+              <h3>Regenesys Education</h3>
+              <p class="timeline-role">Growth Product Manager | P&amp;L and Product Strategy</p>
+              <p>Owned P&amp;L and GTM execution across 5+ live educational programs. Tracked CPL, ROAS, conversion quality, and batch economics to guide intake planning, pricing, and campaign decisions.</p>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <span class="timeline-marker" aria-hidden="true"></span>
+            <div class="timeline-card">
+              <span class="timeline-period">Apr 2025 — Present</span>
+              <h3>Cadence Design Systems</h3>
+              <p class="timeline-role">Lead Technical Marketing Engineer | Semiconductor Software</p>
+              <p>Own messaging and positioning across 40+ product lines. Translate complex EDA products into clear narratives for sales and customer-facing teams globally.</p>
+            </div>
+          </li>
+          <!-- Substack: no live URL exists in public_corpus/ yet. Omitted
+               rather than linking a placeholder -- add the real link and
+               this entry goes here, between the work timeline and AI
+               projects. -->
+          <li class="timeline-item">
+            <span class="timeline-marker" aria-hidden="true"></span>
+            <div class="timeline-card">
+              <span class="timeline-period">AI Project</span>
+              <h3>Akshar</h3>
+              <p class="timeline-role">Agentic writing workflow with staged drafting and editorial control.</p>
+              <p><a href="https://aksharthewriter.vercel.app/offline" target="_blank" rel="noopener">aksharthewriter.vercel.app</a></p>
+              <span class="timeline-status">In private preview</span>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <span class="timeline-marker" aria-hidden="true"></span>
+            <div class="timeline-card">
+              <span class="timeline-period">AI Project</span>
+              <h3>Sahayak</h3>
+              <p class="timeline-role">Talent surface shaped around startup operating reality and matching quality.</p>
+              <p><a href="https://sahayakhq.co/" target="_blank" rel="noopener">sahayakhq.co</a></p>
+              <span class="timeline-status">In private preview</span>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <span class="timeline-marker" aria-hidden="true"></span>
+            <div class="timeline-card">
+              <span class="timeline-period">Companies worked with</span>
+              <div class="timeline-companies">
+                <span>Cadence Design Systems</span>
+                <span>Regenesys Education</span>
+                <span>PwC</span>
+                <span>Synopsys</span>
+              </div>
+            </div>
+          </li>
+        </ol>
       </section>
     </section>
 
     <section class="thinking-page page-section" data-page="thinking" id="thinking-window">
       <div class="thinking-layout reveal">
         <div class="section-lead">
-          <p class="eyebrow">Thinking Window</p>
-          <h1>See how Rahul reasons through messy problems.</h1>
+          <span class="beta-badge">Beta — limited</span>
+          <p class="eyebrow">AMA</p>
+          <h1>See how I reason through messy problems.</h1>
           <p>Use a scenario, product call, GTM question, or agentic-system tradeoff.</p>
         </div>
         <section class="inquiry-panel thinking-inquiry" data-ask-surface data-source-page="thinking_window">
+          <div class="beta-panel">
+            <p>AMA is a work in progress — it reasons through your question using the same patterns I actually rely on for real decisions, not a script.</p>
+            <p>If it doesn't quite land, that's exactly why I'd still say: reach out directly.</p>
+          </div>
           <div class="reasoning-workbench" aria-label="Reasoning workbench preview">
             <div class="workbench-item reveal"><span>Situation</span><p>What is actually happening?</p></div>
             <div class="workbench-item reveal"><span>Frame</span><p>What decision is being made?</p></div>
@@ -211,9 +202,9 @@
           </div>
           <form class="ask-form vertical" data-ask-form>
             <textarea name="question" placeholder="Drop a messy scenario Rahul should reason through..." autocomplete="off"></textarea>
-            <button type="submit">Open Thinking Window</button>
+            <button type="submit">Ask AMA</button>
           </form>
-          <div class="prompt-chips" aria-label="Thinking Window prompts">
+          <div class="prompt-chips" aria-label="AMA prompts">
             <button type="button" data-question="How would Rahul think through a messy GTM problem?">Messy GTM</button>
             <button type="button" data-question="How does Rahul evaluate whether to build?">Build or wait</button>
             <button type="button" data-question="How would Rahul reason about agentic systems?">Agentic tradeoff</button>
@@ -229,7 +220,7 @@
           </div>
           <aside class="grounding-panel">
             <span class="mini-label">Grounding panel</span>
-            <p>Thinking Window uses the public evidence layer, preserves boundaries, and avoids resume dumps.</p>
+            <p>AMA uses the public evidence layer, preserves boundaries, and avoids resume dumps.</p>
           </aside>
           <section class="soft-contact" data-soft-contact hidden>
             <div>
@@ -257,22 +248,28 @@
     <section class="contact-page page-section" data-page="contact" id="contact">
       <div class="contact-layout reveal">
         <div class="section-lead">
-          <p class="eyebrow">Contact Rahul</p>
-          <h1>Start with useful context.</h1>
-          <p>Founder problem, role conversation, collaboration, or a specific thread worth unpacking.</p>
+          <p class="eyebrow">Contact Me</p>
+          <h1>Get in touch.</h1>
+          <p>Founder problem, role conversation, or a collaboration worth unpacking — write in, I read everything.</p>
           <div class="contact-loop" aria-label="Contact loop">
             <div class="loop-item reveal"><span>1</span><strong>Request captured</strong></div>
             <div class="loop-item reveal"><span>2</span><strong>Notification sent</strong></div>
             <div class="loop-item reveal"><span>3</span><strong>Rahul follows up</strong></div>
           </div>
         </div>
-        <form class="contact-form" data-contact-form>
+        <form class="contact-form" data-contact-form novalidate>
           <div class="field-grid">
             <input name="name" placeholder="Name" autocomplete="name" />
-            <input name="email" type="email" placeholder="Email" autocomplete="email" required />
+            <div>
+              <input name="email" type="email" placeholder="Email" autocomplete="email" required />
+              <p class="field-error" data-error-for="email">Enter a valid email address, like name@example.com.</p>
+            </div>
           </div>
           <div class="field-grid">
-            <input name="phone" placeholder="Phone number" autocomplete="tel" />
+            <div>
+              <input name="phone" placeholder="Phone number" autocomplete="tel" />
+              <p class="field-error" data-error-for="phone">Enter a valid phone number (Indian or international).</p>
+            </div>
             <select name="context_type" aria-label="Context type">
               <option value="founder">Founder</option>
               <option value="recruiter">Recruiter</option>

@@ -63,7 +63,6 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertIn("rahul.jpg", combined)
         self.assertIn("/assets/rahul.jpg", combined)
         self.assertIn("localStorage", combined)
-        self.assertIn("prefers-color-scheme", combined)
         self.assertIn("data-ask-output", combined)
         self.assertNotIn("localhost", combined)
         self.assertNotIn("127.0.0.1", combined)
@@ -118,7 +117,7 @@ class VercelPublicStaticTests(unittest.TestCase):
         self.assertIn(disclaimer, footer)
 
         hero_start = html.index('class="hero-shell"')
-        hero_end = html.index('id="public-proof"')
+        hero_end = html.index('id="ask-rahul"')
         hero = html[hero_start:hero_end]
         self.assertNotIn(copyright_text, hero)
         self.assertNotIn(disclaimer, hero)
@@ -146,10 +145,8 @@ class VercelPublicStaticTests(unittest.TestCase):
 
         ask_index = html.index('id="ask-rahul"')
         ask_output_index = html.index("data-ask-output", ask_index)
-        proof_index = html.index('id="public-proof"')
-        work_index = html.index('id="work-model"')
-        self.assertLess(ask_output_index, proof_index)
-        self.assertLess(ask_output_index, work_index)
+        timeline_index = html.index('id="timeline"')
+        self.assertLess(ask_output_index, timeline_index)
 
         thinking_index = html.index('id="thinking-window"')
         thinking_output_index = html.index("data-ask-output", thinking_index)
@@ -159,20 +156,16 @@ class VercelPublicStaticTests(unittest.TestCase):
     def test_public_product_surfaces_are_present(self):
         html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
 
-        self.assertIn("data-hero-product-surface", html)
-        self.assertIn("Ask input", html)
-        self.assertIn("hero-ask-card", html)
         self.assertIn("ask-form", html)
+        self.assertIn('data-ask-surface', html)
         self.assertNotIn("Sample answer", html)
-        self.assertIn("Evidence nodes", html)
-        self.assertIn("Thinking Window", html)
-        self.assertIn('data-evidence-visual', html)
-        self.assertIn("Resume facts", html)
-        self.assertIn("Projects", html)
-        self.assertIn("Education", html)
-        self.assertIn("Work history", html)
-        self.assertIn("Skills", html)
-        self.assertIn("Citations", html)
+        self.assertIn("AMA", html)
+        self.assertNotIn("Thinking Window", html)
+        self.assertIn('id="timeline"', html)
+        self.assertIn("Synopsys", html)
+        self.assertIn("Cadence Design Systems", html)
+        self.assertIn("In private preview", html)
+        self.assertIn("Companies worked with", html)
 
     def test_contact_form_and_loop_are_present(self):
         html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
@@ -192,13 +185,12 @@ class VercelPublicStaticTests(unittest.TestCase):
 
         nav = html.split("<nav", 1)[1].split("</nav>", 1)[0]
         self.assertIn("Portfolio", nav)
-        self.assertIn("Thinking Window", nav)
-        self.assertIn("Proof", nav)
-        self.assertIn("Contact", nav)
+        self.assertIn("AMA (beta)", nav)
+        self.assertIn("Contact Me", nav)
+        self.assertNotIn("Thinking Window", nav)
         self.assertNotIn("/admin", nav)
         self.assertNotIn("/console", nav)
         self.assertIn("data-nav-menu", html)
-        self.assertIn("data-theme-toggle", html)
 
     def test_photo_references_existing_asset_and_has_fallback(self):
         html = (PUBLIC_DIR / "index.html").read_text(encoding="utf-8")
