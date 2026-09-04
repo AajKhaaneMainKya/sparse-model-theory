@@ -80,6 +80,19 @@ CREATE TABLE IF NOT EXISTS public_question_logs (
 
 CREATE INDEX IF NOT EXISTS idx_public_question_logs_created
     ON public_question_logs(created_at);
+
+CREATE TABLE IF NOT EXISTS drafts (
+    id                TEXT PRIMARY KEY,
+    created_at        TEXT NOT NULL,
+    title             TEXT NOT NULL,
+    content           TEXT NOT NULL,
+    editorial_score   INTEGER,
+    status            TEXT NOT NULL,
+    topic_source      TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_drafts_status_created
+    ON drafts(status, created_at);
 """
 
 # Columns added after the original schema shipped, applied idempotently to any
@@ -289,6 +302,64 @@ def list_public_question_logs(limit: int = 100) -> list[dict[str, object]]:
             LIMIT ?
             """,
             (limit,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+# ---------- Drafts (daily Akshar-generated content, gated by Telegram approval) ----------
+
+def add_draft(
+    *,
+    title: str,
+    content: str,
+    editorial_score: int | None,
+    status: str = "pending",
+    topic_source: str | None = None,
+) -> dict[str, object]:
+    draft_id = str(uuid.uuid4())
+    now = _now()
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO drafts (id, created_at, title, content, editorial_score, status, topic_source)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (draft_id, now, title, content, editorial_score, status, topic_source),
+        )
+    return {
+        "id": draft_id,
+        "created_at": now,
+        "title": title,
+        "content": content,
+        "editorial_score": editorial_score,
+        "status": status,
+        "topic_source": topic_source,
+    }
+
+
+def get_draft(draft_id: str) -> dict[str, object] | None:
+    with _connect() as conn:
+        row = conn.execute("SELECT * FROM drafts WHERE id = ?", (draft_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def update_draft_status(draft_id: str, status: str) -> bool:
+    with _connect() as conn:
+        cur = conn.execute("UPDATE drafts SET status = ? WHERE id = ?", (status, draft_id))
+    return cur.rowcount > 0
+
+
+def list_drafts_by_status(status: str, limit: int = 100) -> list[dict[str, object]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, created_at, title, content, editorial_score, status, topic_source
+            FROM drafts
+            WHERE status = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (status, limit),
         ).fetchall()
     return [dict(row) for row in rows]
 

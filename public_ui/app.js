@@ -1,7 +1,8 @@
-const pages = new Set(["/", "/thinking-window", "/contact"]);
+const pages = new Set(["/", "/thinking-window", "/contact", "/articles"]);
 const ASK_RAHUL_ENDPOINT = "/api/ask-rahul";
 const THINKING_WINDOW_ENDPOINT = "/api/thinking-window";
 const CONTACT_ENDPOINT = "/api/contact-request";
+const ARTICLES_ENDPOINT = "/api/articles";
 // Internal storage key only, never rendered -- kept as-is through the
 // AMA relabeling since it's not user-visible.
 const THINKING_COUNT_KEY = "rahul-thinking-window-count";
@@ -15,13 +16,28 @@ function apiPath(path) {
   return path;
 }
 
+// "/articles" (the list) and "/articles/<id>" (one article) both map to the
+// same data-page="articles" section -- isArticlePath()/articleIdFromPath()
+// distinguish which view renderRoute() should load.
+function isArticlePath(path) {
+  return path === "/articles" || /^\/articles\/[^/]+$/.test(path);
+}
+
+function articleIdFromPath(path) {
+  const match = path.match(/^\/articles\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
 function currentPath() {
-  return pages.has(window.location.pathname) ? window.location.pathname : "/";
+  const path = window.location.pathname;
+  if (pages.has(path) || isArticlePath(path)) return path;
+  return "/";
 }
 
 function pageForPath(path) {
   if (path === "/thinking-window") return "thinking";
   if (path === "/contact") return "contact";
+  if (isArticlePath(path)) return "articles";
   return "portfolio";
 }
 
@@ -40,11 +56,20 @@ function renderRoute() {
 
   for (const link of document.querySelectorAll("[data-route]")) {
     const href = link.getAttribute("href");
-    link.classList.toggle("active", href === path || (href === "/" && path === "/"));
+    const isActive = href === path
+      || (href === "/" && path === "/")
+      || (href === "/articles" && isArticlePath(path));
+    link.classList.toggle("active", isActive);
   }
 
   if (window.location.pathname !== path) {
     window.history.replaceState({}, "", path);
+  }
+
+  if (page === "articles") {
+    const id = articleIdFromPath(path);
+    if (id) loadArticleDetail(id);
+    else loadArticlesList();
   }
 
   closeMobileNav();
@@ -640,12 +665,115 @@ async function submitContact(form, statusElement, source = "contact") {
   }
 }
 
-for (const link of document.querySelectorAll("[data-route]")) {
-  link.addEventListener("click", event => {
-    event.preventDefault();
-    go(link.getAttribute("href"));
-  });
+// ---------- Articles ----------
+
+// The stored title is derived from the article's own first heading line
+// (see api/draft_scheduler.py's _derive_title) -- strip that same line
+// from the body before rendering it, so the title doesn't appear twice.
+function _stripLeadingTitleLine(content) {
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  let i = 0;
+  while (i < lines.length && !lines[i].trim()) i++;
+  if (i < lines.length && /^#{1,6}\s+/.test(lines[i])) {
+    lines.splice(i, 1);
+  }
+  return lines.join("\n");
 }
+
+function _formatArticleDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {year: "numeric", month: "short", day: "numeric"});
+  } catch {
+    return "";
+  }
+}
+
+async function loadArticlesList() {
+  const listView = document.querySelector("[data-articles-list-view]");
+  const listEl = document.querySelector("[data-articles-list]");
+  const emptyEl = document.querySelector("[data-articles-empty]");
+  const detailEl = document.querySelector("[data-article-detail]");
+
+  detailEl.hidden = true;
+  listView.hidden = false;
+  listEl.hidden = false;
+  emptyEl.hidden = true;
+  listEl.innerHTML = "";
+
+  try {
+    const response = await fetch(apiPath(ARTICLES_ENDPOINT));
+    const data = await parseResponse(response);
+    const articles = data.articles || [];
+
+    if (!articles.length) {
+      emptyEl.hidden = false;
+      return;
+    }
+
+    for (const article of articles) {
+      const card = document.createElement("a");
+      card.className = "article-card";
+      card.href = `/articles/${article.id}`;
+      card.setAttribute("data-route", "");
+
+      const date = document.createElement("span");
+      date.className = "article-card-date";
+      date.textContent = _formatArticleDate(article.created_at);
+
+      const title = document.createElement("h3");
+      title.textContent = article.title;
+
+      const excerpt = document.createElement("p");
+      excerpt.textContent = article.excerpt;
+
+      card.append(date, title, excerpt);
+      listEl.appendChild(card);
+    }
+  } catch (error) {
+    emptyEl.hidden = false;
+    emptyEl.textContent = "Couldn't load articles right now.";
+  }
+}
+
+async function loadArticleDetail(id) {
+  const listView = document.querySelector("[data-articles-list-view]");
+  const listEl = document.querySelector("[data-articles-list]");
+  const emptyEl = document.querySelector("[data-articles-empty]");
+  const detailEl = document.querySelector("[data-article-detail]");
+  const titleEl = detailEl.querySelector("[data-article-title]");
+  const dateEl = detailEl.querySelector("[data-article-date]");
+  const contentEl = detailEl.querySelector("[data-article-content]");
+
+  listView.hidden = true;
+  listEl.hidden = true;
+  emptyEl.hidden = true;
+  detailEl.hidden = false;
+  titleEl.textContent = "Loading...";
+  dateEl.textContent = "";
+  contentEl.innerHTML = "";
+
+  try {
+    const response = await fetch(apiPath(`${ARTICLES_ENDPOINT}/${id}`));
+    const data = await parseResponse(response);
+    titleEl.textContent = data.title;
+    dateEl.textContent = _formatArticleDate(data.created_at);
+    renderMarkdownAnswer(contentEl, _stripLeadingTitleLine(data.content || ""));
+  } catch (error) {
+    titleEl.textContent = "Article not found";
+    dateEl.textContent = "";
+    contentEl.innerHTML = "";
+  }
+}
+
+// Event delegation, not a one-time per-element loop: article-card links are
+// created dynamically after page load (see renderArticlesList below), so a
+// static querySelectorAll pass at script-load time would never see them.
+document.body.addEventListener("click", event => {
+  const link = event.target.closest("[data-route]");
+  if (!link) return;
+  event.preventDefault();
+  go(link.getAttribute("href"));
+});
 
 for (const link of document.querySelectorAll('a[href^="#"]')) {
   link.addEventListener("click", () => closeMobileNav());

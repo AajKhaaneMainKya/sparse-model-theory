@@ -31,6 +31,7 @@
         <a href="/" data-route>Portfolio</a>
         <a href="/thinking-window" data-route>AMA (beta)</a>
         <a href="/contact" data-route>Contact Me</a>
+        <a href="/articles" data-route>Articles</a>
       </nav>
     </div>
   </header>
@@ -290,6 +291,25 @@
           <button type="submit">Contact Rahul</button>
           <p class="form-status" data-contact-status aria-live="polite"></p>
         </form>
+      </div>
+    </section>
+
+    <section class="articles-page page-section" data-page="articles" id="articles">
+      <div class="articles-layout">
+        <div class="section-lead reveal" data-articles-list-view>
+          <p class="eyebrow">Articles</p>
+          <h1>Public writing.</h1>
+          <p>Drafted, reviewed, and approved before anything goes live here.</p>
+        </div>
+        <div class="articles-list" data-articles-list></div>
+        <p class="empty" data-articles-empty hidden>No articles published yet — check back soon.</p>
+
+        <article class="article-detail" data-article-detail hidden>
+          <a href="/articles" class="button secondary" data-route>← Back to articles</a>
+          <p class="eyebrow" data-article-date></p>
+          <h1 data-article-title></h1>
+          <div class="answer-text article-body" data-article-content></div>
+        </article>
       </div>
     </section>
   </main>

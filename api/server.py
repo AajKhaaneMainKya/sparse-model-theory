@@ -29,7 +29,9 @@ from engine.gate import route_note
 from engine.note import Note, NoteValidationError, load_note, load_notes, parse_frontmatter
 
 from . import db
+from . import draft_scheduler
 from . import public_portfolio
+from . import telegram_bot
 from .public_portfolio import AskRahulRequest, ThinkingWindowRequest, ask_rahul, thinking_window
 from .zone import (
     DAILY_DIR,
@@ -70,6 +72,14 @@ app.mount("/static", StaticFiles(directory=UI_DIR), name="static")
 app.mount("/portfolio-static", StaticFiles(directory=PUBLIC_UI_DIR), name="portfolio-static")
 app.mount("/assets", StaticFiles(directory=PUBLIC_UI_DIR / "assets"), name="public-assets")
 app.mount("/admin-static", StaticFiles(directory=ADMIN_UI_DIR), name="admin-static")
+
+
+@app.on_event("startup")
+def _start_background_services() -> None:
+    # Both are safe no-ops if their required env vars (TELEGRAM_BOT_TOKEN,
+    # etc.) aren't set -- they log and skip rather than crashing startup.
+    telegram_bot.start_polling()
+    draft_scheduler.start_scheduler()
 
 
 @dataclass(frozen=True)
@@ -846,6 +856,49 @@ def contact_request(payload: ContactRequest) -> dict[str, object]:
     record["notification_status"] = notification.status
     record["notification_error"] = notification.error
     return _contact_response(record)
+
+
+def _article_summary(draft: dict[str, object]) -> dict[str, object]:
+    content = str(draft.get("content", ""))
+    excerpt = content.strip().splitlines()
+    excerpt = " ".join(excerpt[1:])[:280] if len(excerpt) > 1 else content[:280]
+    return {
+        "id": draft["id"],
+        "title": draft["title"],
+        "excerpt": excerpt,
+        "created_at": draft["created_at"],
+    }
+
+
+@app.get("/articles")
+def list_articles() -> dict[str, object]:
+    approved = db.list_drafts_by_status("approved")
+    return {"articles": [_article_summary(d) for d in approved]}
+
+
+@app.get("/articles/{article_id}")
+def get_article(article_id: str) -> dict[str, object]:
+    draft = db.get_draft(article_id)
+    if not draft or draft.get("status") != "approved":
+        raise HTTPException(status_code=404, detail="Article not found")
+    return {
+        "id": draft["id"],
+        "title": draft["title"],
+        "content": draft["content"],
+        "editorial_score": draft.get("editorial_score"),
+        "created_at": draft["created_at"],
+    }
+
+
+@app.post("/admin/drafts/trigger")
+def admin_trigger_draft(request: Request) -> dict[str, object]:
+    """Manually fires one draft-generation cycle immediately, instead of
+    waiting for the daily cron job. Runs in a background thread since a
+    real run takes up to ~16 minutes -- this endpoint returns right away."""
+    _check_admin_allowed(request)
+    thread = threading.Thread(target=draft_scheduler.run_daily_draft, daemon=True)
+    thread.start()
+    return {"status": "started"}
 
 
 @app.post("/admin/resume-upload")

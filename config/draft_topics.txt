@@ -1,0 +1,11 @@
+# Daily draft topics — one per line, rotated in order (round-robin).
+# Lines starting with # are ignored. Edit this file directly to add,
+# remove, or reorder topics; no code change needed.
+Why most AI product bets fail at the handoff between prototype and real users
+What actually separates a real agentic system from a chatbot with extra steps
+The GTM mistake founders make when they ship before they've defined the buyer
+Why retrieval quality matters more than model choice for most AI products
+What evaluating a messy product bet actually looks like in practice
+The difference between a demo that impresses and a system that ships
+Why grounding and evidence boundaries matter more as AI products scale
+What a real 0-to-1 launch actually requires versus what teams assume it requires

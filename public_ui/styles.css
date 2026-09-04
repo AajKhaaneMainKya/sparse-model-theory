@@ -319,7 +319,9 @@ h3 {
 .workbench-item,
 .grounding-panel,
 .soft-contact,
-.loop-item {
+.loop-item,
+.article-card,
+.article-detail {
   border: 1px solid var(--line);
   background: var(--surface-solid);
   border-radius: var(--radius-sm);
@@ -1050,6 +1052,54 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] {
 .form-status { min-height: 24px; margin: 0; color: var(--muted); }
 .form-status.ok { color: var(--accent); }
 .form-status.error { color: var(--danger); }
+
+/* ---------- Articles ---------- */
+
+.articles-page { min-height: calc(100vh - 90px); }
+
+.articles-list {
+  display: grid;
+  gap: 16px;
+}
+
+.article-card {
+  display: block;
+  padding: 22px 24px;
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.article-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.article-card-date {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--quiet);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.article-card h3 { margin-bottom: 6px; }
+.article-card p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+.article-detail {
+  max-width: 760px;
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.article-detail .button.secondary {
+  display: inline-flex;
+  margin-bottom: 28px;
+}
+
+.article-detail [data-article-date] { margin-bottom: 10px; }
+.article-detail h1 { margin-bottom: 24px; font-size: clamp(1.8rem, 3.6vw, 2.6rem); }
+
+.article-body { max-width: none; }
 
 .site-footer {
   display: flex;
