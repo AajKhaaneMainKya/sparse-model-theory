@@ -4,3 +4,4 @@ fastapi
 uvicorn
 pypdf
 python-docx
+APScheduler
