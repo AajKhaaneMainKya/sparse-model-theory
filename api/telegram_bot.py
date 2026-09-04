@@ -86,6 +86,63 @@ def send_draft_notification(draft: dict[str, object]) -> bool:
     return bool(result and result.get("ok"))
 
 
+# Matches "/draft", "/draft@BotName", "/draft some topic text" (command form)
+# and "draft: some topic text" (plain-message form) -- both requested in the
+# task, case-insensitive, optional topic after it.
+_DRAFT_COMMAND_RE = re.compile(r"^/draft(?:@\w+)?\s*(.*)$", re.IGNORECASE | re.DOTALL)
+_DRAFT_PREFIX_RE = re.compile(r"^draft:\s*(.*)$", re.IGNORECASE | re.DOTALL)
+
+
+def _parse_draft_command(text: str) -> tuple[bool, str | None]:
+    """Returns (is_draft_trigger, topic). topic is None when no topic text
+    followed the command, meaning "fall back to the rotating topic list"."""
+    stripped = text.strip()
+    match = _DRAFT_COMMAND_RE.match(stripped) or _DRAFT_PREFIX_RE.match(stripped)
+    if not match:
+        return False, None
+    topic = match.group(1).strip()
+    return True, (topic or None)
+
+
+def _handle_message(message: dict) -> None:
+    chat_id = str(message.get("chat", {}).get("id", ""))
+    text = message.get("text") or ""
+
+    # The actual security boundary: this bypasses admin-cookie auth
+    # entirely, so any chat other than the configured TELEGRAM_CHAT_ID is
+    # ignored outright -- not replied to, not processed, nothing that
+    # confirms to a stranger messaging the bot that a /draft command even
+    # exists. Comparing as strings since chat.id arrives as a JSON number
+    # but TELEGRAM_CHAT_ID is read from the environment as a string.
+    if not TELEGRAM_CHAT_ID or chat_id != str(TELEGRAM_CHAT_ID):
+        if text.strip():
+            logger.warning("telegram_message_rejected_unauthorized chat_id=%s", chat_id)
+        return
+
+    is_draft_trigger, topic = _parse_draft_command(text)
+    if not is_draft_trigger:
+        return
+
+    # Local import: draft_scheduler imports this module at module load time
+    # (to send notifications/failure alerts), so importing it back at
+    # module level here would be circular.
+    from . import draft_scheduler
+
+    position = draft_scheduler.enqueue_draft(topic)
+    if position <= 1:
+        label = topic if topic else "next topic in rotation"
+        ack = f"🚀 Starting draft on: {label}"
+    else:
+        ahead = position - 1
+        label = topic if topic else "next topic in rotation"
+        ack = (
+            f"📋 Queued: {label} — {ahead} job(s) ahead of it, "
+            f"~{ahead * 15} min estimated wait before it starts"
+        )
+    send_message(ack)
+    logger.info("draft_triggered_via_telegram topic=%s position=%d", topic, position)
+
+
 def _answer_callback(query_id: str | None, text: str) -> None:
     if not query_id:
         return
@@ -130,6 +187,13 @@ def _poll_loop() -> None:
                 callback = update.get("callback_query")
                 if callback:
                     _handle_callback(callback)
+                    continue
+                message = update.get("message")
+                if message:
+                    try:
+                        _handle_message(message)
+                    except Exception:
+                        logger.exception("telegram_message_handling_error")
         except (HTTPError, URLError, TimeoutError, OSError) as exc:
             logger.warning("telegram_poll_error error=%s", exc)
             time.sleep(5)

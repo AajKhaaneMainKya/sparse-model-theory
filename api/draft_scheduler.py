@@ -9,6 +9,7 @@ importing that repo.
 from __future__ import annotations
 
 import logging
+import queue
 import threading
 from pathlib import Path
 
@@ -26,6 +27,24 @@ _TOPIC_INDEX_FILE = ROOT / "data" / ".draft_topic_index"
 
 _scheduler = BackgroundScheduler()
 _topic_lock = threading.Lock()
+
+# --- Sequential draft queue -------------------------------------------------
+#
+# Every trigger path (daily cron, admin HTTP trigger, Telegram /draft command)
+# funnels through enqueue_draft() rather than spawning its own thread. Jobs
+# run one at a time, in submission order, via a single long-lived worker
+# thread. Deliberately NOT concurrent: each job is a blocking call into
+# Akshar taking up to ~16 minutes, and Akshar has its own per-account
+# rate/cap limits -- firing several jobs at once risks tripping those limits
+# or producing partial/rejected results, for a time saving that mostly
+# doesn't matter here (these are background drafts, not something a user is
+# waiting on synchronously). A sequential queue also means "send 3 topics in
+# a row" from Telegram just works, in order, without any extra coordination.
+_draft_queue: "queue.Queue[str | None]" = queue.Queue()
+_queue_worker_started = False
+_queue_worker_lock = threading.Lock()
+_jobs_in_flight = 0  # includes the job currently running, not just queued
+_jobs_in_flight_lock = threading.Lock()
 
 
 def _load_topics() -> list[str]:
@@ -68,12 +87,15 @@ def _derive_title(article: str, topic: str) -> str:
     return topic[:120]
 
 
-def run_daily_draft() -> dict[str, object]:
-    """Generates one draft end to end: picks a topic, calls Akshar (blocking,
-    up to ~16 minutes), stores the result as a pending draft, and notifies
-    Telegram. Safe to call directly for a manual trigger -- callers invoking
-    this from a request handler MUST run it in a background thread."""
-    topic = _next_topic()
+def run_draft(topic: str | None = None) -> dict[str, object]:
+    """Generates one draft end to end: uses `topic` if given, otherwise picks
+    the next one from the rotating topic list, calls Akshar (blocking, up to
+    ~16 minutes), stores the result as a pending draft, and notifies
+    Telegram. Callers should normally go through enqueue_draft() rather than
+    calling this directly, so concurrent triggers serialize instead of
+    racing each other against Akshar's rate limits."""
+    if topic is None:
+        topic = _next_topic()
     if not topic:
         logger.error("draft_job_no_topics config_file=%s", TOPICS_FILE)
         telegram_bot.send_message(f"⚠️ Daily draft failed: no topics configured in {TOPICS_FILE}")
@@ -101,10 +123,54 @@ def run_daily_draft() -> dict[str, object]:
     return {"status": "done", "draft_id": draft["id"]}
 
 
+def run_daily_draft() -> dict[str, object]:
+    """Back-compat name for run_draft(None) -- the rotating-topic case.
+    Kept as a thin wrapper since it's a clearer name for the cron/no-topic
+    path than a bare run_draft() call would be."""
+    return run_draft(None)
+
+
+def _queue_worker() -> None:
+    global _jobs_in_flight
+    logger.info("draft_queue_worker_started")
+    while True:
+        topic = _draft_queue.get()
+        try:
+            run_draft(topic)
+        except Exception:
+            logger.exception("draft_queue_job_unhandled_error topic=%s", topic)
+        finally:
+            with _jobs_in_flight_lock:
+                _jobs_in_flight -= 1
+            _draft_queue.task_done()
+
+
+def enqueue_draft(topic: str | None = None) -> int:
+    """Adds one draft job to the sequential queue and returns its 1-based
+    position (1 = will start immediately, since nothing else is running).
+    Starts the single background worker thread on first use -- safe to call
+    even if start_scheduler() was never called (e.g. Telegram configured
+    without the cron job ever firing)."""
+    global _queue_worker_started, _jobs_in_flight
+    with _queue_worker_lock:
+        if not _queue_worker_started:
+            threading.Thread(target=_queue_worker, daemon=True).start()
+            _queue_worker_started = True
+    with _jobs_in_flight_lock:
+        _jobs_in_flight += 1
+        position = _jobs_in_flight
+        # put() happens inside the same lock as the increment so the
+        # reported position always matches actual queue order under
+        # concurrent submitters (e.g. Telegram + admin trigger at once).
+        _draft_queue.put(topic)
+    logger.info("draft_job_enqueued topic=%s position=%d", topic, position)
+    return position
+
+
 def _scheduled_job() -> None:
     logger.info("draft_scheduled_job_firing")
     try:
-        run_daily_draft()
+        enqueue_draft(None)
     except Exception:
         logger.exception("draft_scheduled_job_unhandled_error")
 

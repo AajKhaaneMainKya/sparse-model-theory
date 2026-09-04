@@ -892,13 +892,15 @@ def get_article(article_id: str) -> dict[str, object]:
 
 @app.post("/admin/drafts/trigger")
 def admin_trigger_draft(request: Request) -> dict[str, object]:
-    """Manually fires one draft-generation cycle immediately, instead of
-    waiting for the daily cron job. Runs in a background thread since a
-    real run takes up to ~16 minutes -- this endpoint returns right away."""
+    """Manually fires one draft-generation cycle, instead of waiting for the
+    daily cron job. Goes through the same sequential queue as the Telegram
+    /draft command and the cron job (see draft_scheduler.enqueue_draft) --
+    a real run takes up to ~16 minutes, so this returns right away rather
+    than blocking, and a job already in flight (from any trigger source)
+    delays this one instead of racing it against Akshar's rate limits."""
     _check_admin_allowed(request)
-    thread = threading.Thread(target=draft_scheduler.run_daily_draft, daemon=True)
-    thread.start()
-    return {"status": "started"}
+    position = draft_scheduler.enqueue_draft()
+    return {"status": "queued", "position": position}
 
 
 @app.post("/admin/resume-upload")
