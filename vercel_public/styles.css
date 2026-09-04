@@ -1057,6 +1057,69 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] {
 
 .articles-page { min-height: calc(100vh - 90px); }
 
+/* Akshar attribution badge -- colors/fonts pulled from the live Akshar page
+   (aksharthewriter.vercel.app/offline), scoped as local custom properties
+   rather than added to the site's own token system, since this badge is
+   deliberately a distinct product's identity, not a site color. */
+.akshar-badge {
+  --akshar-amber: #b45309;
+  --akshar-quiet: #9ca3af;
+  --akshar-line: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 14px 20px;
+  background: #ffffff;
+  border: 1.5px solid var(--akshar-amber);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.akshar-badge:hover {
+  box-shadow: 0 6px 16px -8px rgba(180, 83, 9, 0.35);
+  transform: translateY(-1px);
+}
+
+.akshar-mark {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.akshar-devanagari {
+  font-family: Georgia, Cambria, "Times New Roman", serif;
+  font-size: 1.3rem;
+  color: var(--akshar-amber);
+  line-height: 1;
+}
+
+.akshar-latin {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--akshar-quiet);
+}
+
+.akshar-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--akshar-line);
+}
+
+.akshar-badge-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+@media (max-width: 520px) {
+  .akshar-badge { flex-wrap: wrap; row-gap: 8px; }
+}
+
 .articles-list {
   display: grid;
   gap: 16px;
